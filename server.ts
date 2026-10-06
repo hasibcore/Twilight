@@ -235,6 +235,51 @@ app.post('/api/recommendations/dynamic', async (req: Request, res: Response) => 
   }
 });
 
+// Helper: Serve local file with full HTTP 206 Partial Content Range support
+function streamLocalAudioFile(req: Request, res: Response, filePath: string) {
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ error: 'Audio file not found' });
+    return;
+  }
+
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+
+  if (range) {
+    const parts = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+    if (start >= fileSize) {
+      res.status(416).send(`Requested range not satisfiable\n${start} >= ${fileSize}`);
+      return;
+    }
+
+    const chunksize = end - start + 1;
+    const file = fs.createReadStream(filePath, { start, end });
+    const head = {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunksize,
+      'Content-Type': 'audio/mpeg',
+      'Cache-Control': 'public, max-age=86400',
+    };
+
+    res.writeHead(206, head);
+    file.pipe(res);
+  } else {
+    const head = {
+      'Content-Length': fileSize,
+      'Accept-Ranges': 'bytes',
+      'Content-Type': 'audio/mpeg',
+      'Cache-Control': 'public, max-age=86400',
+    };
+    res.writeHead(200, head);
+    fs.createReadStream(filePath).pipe(res);
+  }
+}
+
 // Audio Stream API Endpoint
 app.get('/api/stream/:videoId', async (req: Request, res: Response) => {
   const videoId = req.params.videoId;
@@ -251,37 +296,45 @@ app.get('/api/stream/:videoId', async (req: Request, res: Response) => {
   if (videoId.length === 11 && !videoId.startsWith('custom_')) {
     try {
       const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      const info = await ytdl.getInfo(videoUrl);
-      const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
+      const stream = ytdl(videoUrl, {
+        filter: 'audioonly',
+        quality: 'highestaudio',
+        highWaterMark: 1 << 22,
+      });
 
-      if (audioFormats.length > 0) {
-        const bestAudio = audioFormats.reduce((prev, curr) => {
-          return (curr.audioBitrate || 0) > (prev.audioBitrate || 0) ? curr : prev;
-        });
-
-        if (bestAudio.url) {
-          res.redirect(302, bestAudio.url);
-          return;
+      let hasSentHeaders = false;
+      stream.on('response', (ytdlRes: any) => {
+        if (!hasSentHeaders && !res.headersSent) {
+          hasSentHeaders = true;
+          res.writeHead(200, {
+            'Content-Type': ytdlRes.headers['content-type'] || 'audio/webm',
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'public, max-age=3600',
+          });
         }
-      }
+      });
+
+      stream.on('error', (err: any) => {
+        console.warn('ytdl stream error, smoothly falling back to local track:', err.message);
+        if (!res.headersSent) {
+          streamLocalAudioFile(req, res, localAudioPath);
+        }
+      });
+
+      req.on('close', () => {
+        try {
+          stream.destroy();
+        } catch (_) {}
+      });
+
+      stream.pipe(res);
+      return;
     } catch (err: any) {
       // ytdl blocked or restricted, serve local high-fidelity track with range support
     }
   }
 
-  if (fs.existsSync(localAudioPath)) {
-    res.sendFile(localAudioPath, {
-      headers: {
-        'Content-Type': 'audio/mpeg',
-        'Accept-Ranges': 'bytes',
-        'Cache-Control': 'public, max-age=86400',
-      },
-    });
-    return;
-  }
-
-  // Fallback to static route
-  res.redirect(302, `/audio/track_${trackNum}.mp3`);
+  streamLocalAudioFile(req, res, localAudioPath);
 });
 
 // Setup Vite middleware in dev or static serving in production

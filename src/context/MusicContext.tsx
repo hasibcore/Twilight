@@ -187,9 +187,16 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const pendingSongRef = useRef<Song | null>(null);
   const isRepeatRef = useRef<boolean>(isRepeat);
   isRepeatRef.current = isRepeat;
+  const isShuffleRef = useRef<boolean>(isShuffle);
+  isShuffleRef.current = isShuffle;
   const currentSongRef = useRef<Song | null>(currentSong);
   currentSongRef.current = currentSong;
+  const queueRef = useRef<Song[]>(queue);
+  queueRef.current = queue;
+  const currentIndexRef = useRef<number>(currentIndex);
+  currentIndexRef.current = currentIndex;
   const handleNextSongRef = useRef<() => void>(() => {});
+  const loadingWatchdogRef = useRef<any>(null);
 
   // Initialize YouTube IFrame Player
   useEffect(() => {
@@ -251,6 +258,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               if (event.data === 1) {
                 setIsPlaying(true);
                 setIsLoading(false);
+                if (loadingWatchdogRef.current) {
+                  clearTimeout(loadingWatchdogRef.current);
+                  loadingWatchdogRef.current = null;
+                }
                 try {
                   const d = event.target.getDuration();
                   if (d && d > 0) setDuration(d);
@@ -273,19 +284,46 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             onError: async (event: any) => {
               console.warn('YouTube playback error:', event.data);
               setIsLoading(false);
+              if (loadingWatchdogRef.current) {
+                clearTimeout(loadingWatchdogRef.current);
+                loadingWatchdogRef.current = null;
+              }
               const active = currentSongRef.current;
-              if (active && (event.data === 150 || event.data === 101 || event.data === 100)) {
-                try {
-                  const res = await fetch(`/api/search?q=${encodeURIComponent(active.title + ' ' + active.artist + ' audio')}`);
-                  const data = await res.json();
-                  if (data.songs && data.songs.length > 0) {
-                    const alt = data.songs.find((s: Song) => s.id !== active.id) || data.songs[0];
-                    if (alt && alt.id !== active.id && ytPlayerRef.current) {
-                      ytPlayerRef.current.loadVideoById(alt.id);
-                      ytPlayerRef.current.playVideo();
+              if (active) {
+                let alternateFound = false;
+                if (event.data === 150 || event.data === 101 || event.data === 100) {
+                  try {
+                    const res = await fetch(`/api/search?q=${encodeURIComponent(active.title + ' ' + active.artist + ' audio')}`);
+                    const data = await res.json();
+                    if (data.songs && data.songs.length > 0) {
+                      const alt = data.songs.find((s: Song) => s.id !== active.id) || data.songs[0];
+                      if (alt && alt.id !== active.id && ytPlayerRef.current) {
+                        alternateFound = true;
+                        setCurrentSong(alt);
+                        currentSongRef.current = alt;
+                        ytPlayerRef.current.loadVideoById(alt.id);
+                        ytPlayerRef.current.playVideo();
+                      }
                     }
-                  }
-                } catch {}
+                  } catch {}
+                }
+
+                // If alternate not found or YT is blocked, fallback to direct audio stream
+                if (!alternateFound && audioRef.current) {
+                  console.log('Seamlessly falling back to direct audio stream for:', active.title);
+                  audioRef.current.src = `/api/stream/${encodeURIComponent(active.id)}`;
+                  audioRef.current.currentTime = 0;
+                  audioRef.current
+                    .play()
+                    .then(() => {
+                      setIsPlaying(true);
+                      setIsLoading(false);
+                    })
+                    .catch(() => {
+                      // Final safety fallback: synthetic melody so playback never dies
+                      playSyntheticMelody();
+                    });
+                }
               }
             },
           },
@@ -570,21 +608,48 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Play a song
   const playSong = (song: Song, newQueue?: Song[]) => {
     stopSyntheticMelody();
+    // Update ref immediately so event handlers and async callbacks know current track
+    currentSongRef.current = song;
     setCurrentSong(song);
     setIsLoading(true);
 
+    // Watchdog: clear spinner if loading hangs over 12 seconds
+    if (loadingWatchdogRef.current) {
+      clearTimeout(loadingWatchdogRef.current);
+    }
+    loadingWatchdogRef.current = setTimeout(() => {
+      setIsLoading(false);
+    }, 12000);
+
     if (newQueue && newQueue.length > 0) {
       setQueue(newQueue);
-      const idx = newQueue.findIndex((s) => s.id === song.id);
-      setCurrentIndex(idx !== -1 ? idx : 0);
-    } else {
-      const existingIdx = queue.findIndex((s) => s.id === song.id);
-      if (existingIdx === -1) {
-        setQueue([song, ...queue]);
-        setCurrentIndex(0);
-      } else {
-        setCurrentIndex(existingIdx);
+      queueRef.current = newQueue;
+      let idx = newQueue.findIndex((s) => s.id === song.id);
+      if (idx === -1) {
+        idx = newQueue.findIndex((s) => s.title.toLowerCase().trim() === song.title.toLowerCase().trim());
       }
+      const targetIdx = idx !== -1 ? idx : 0;
+      setCurrentIndex(targetIdx);
+      currentIndexRef.current = targetIdx;
+    } else {
+      setQueue((prevQueue) => {
+        let existingIdx = prevQueue.findIndex((s) => s.id === song.id);
+        if (existingIdx === -1) {
+          existingIdx = prevQueue.findIndex((s) => s.title.toLowerCase().trim() === song.title.toLowerCase().trim());
+        }
+        if (existingIdx === -1) {
+          const nextQ = [song, ...prevQueue];
+          queueRef.current = nextQ;
+          setCurrentIndex(0);
+          currentIndexRef.current = 0;
+          return nextQ;
+        } else {
+          queueRef.current = prevQueue;
+          setCurrentIndex(existingIdx);
+          currentIndexRef.current = existingIdx;
+          return prevQueue;
+        }
+      });
     }
 
     // Update play counts and history
@@ -616,7 +681,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
           ytPlayerRef.current.playVideo();
         } catch (e) {
-          console.warn('YT play failed:', e);
+          console.warn('YT play failed, attempting direct stream:', e);
+          if (audioRef.current) {
+            audioRef.current.src = `/api/stream/${encodeURIComponent(song.id)}`;
+            audioRef.current.play().catch(() => playSyntheticMelody());
+          }
         }
       } else {
         pendingSongRef.current = song;
@@ -641,8 +710,9 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setIsLoading(false);
           })
           .catch((err) => {
-            console.warn('Audio play initiated:', err);
+            console.warn('Audio play initiated fallback:', err);
             setIsLoading(false);
+            playSyntheticMelody();
           });
       }
     }
@@ -689,29 +759,40 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const handleNextSong = () => {
-    if (queue.length === 0) return;
-    let nextIdx = currentIndex + 1;
-    if (isShuffle) {
-      nextIdx = Math.floor(Math.random() * queue.length);
-    } else if (nextIdx >= queue.length) {
-      nextIdx = 0;
+    const currentQ = queueRef.current;
+    if (currentQ.length === 0) return;
+    const currentIdx = currentIndexRef.current;
+    let nextIdx: number;
+
+    if (isShuffleRef.current && currentQ.length > 1) {
+      do {
+        nextIdx = Math.floor(Math.random() * currentQ.length);
+      } while (nextIdx === currentIdx && currentQ.length > 1);
+    } else {
+      nextIdx = currentIdx + 1;
+      if (nextIdx >= currentQ.length) {
+        nextIdx = 0;
+      }
     }
-    const next = queue[nextIdx] || queue[0];
+
+    const next = currentQ[nextIdx] || currentQ[0];
     if (next) {
-      playSong(next, queue);
+      playSong(next, currentQ);
     }
   };
   handleNextSongRef.current = handleNextSong;
 
   const handlePrevSong = () => {
-    if (queue.length === 0) return;
-    let prevIdx = currentIndex - 1;
+    const currentQ = queueRef.current;
+    if (currentQ.length === 0) return;
+    const currentIdx = currentIndexRef.current;
+    let prevIdx = currentIdx - 1;
     if (prevIdx < 0) {
-      prevIdx = queue.length - 1;
+      prevIdx = currentQ.length - 1;
     }
-    const prev = queue[prevIdx] || queue[0];
+    const prev = currentQ[prevIdx] || currentQ[0];
     if (prev) {
-      playSong(prev, queue);
+      playSong(prev, currentQ);
     }
   };
 
@@ -722,8 +803,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       try {
         ytPlayerRef.current.seekTo(seconds, true);
       } catch {}
-    }
-    if (audioRef.current) {
+    } else if (audioRef.current && !isYT) {
       audioRef.current.currentTime = seconds;
     }
   };
@@ -741,8 +821,20 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const toggleShuffle = () => setIsShuffle((prev) => !prev);
-  const toggleRepeat = () => setIsRepeat((prev) => !prev);
+  const toggleShuffle = () => {
+    setIsShuffle((prev) => {
+      const next = !prev;
+      isShuffleRef.current = next;
+      return next;
+    });
+  };
+  const toggleRepeat = () => {
+    setIsRepeat((prev) => {
+      const next = !prev;
+      isRepeatRef.current = next;
+      return next;
+    });
+  };
 
   const setPlaybackSpeed = (speed: number) => {
     setPlaybackSpeedState(speed);

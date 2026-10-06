@@ -138,4 +138,19 @@ class AuthProvider extends ChangeNotifier {
     _successMessage = null;
     notifyListeners();
   }
+
+  bool _isDisposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) {
+      super.notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
 }

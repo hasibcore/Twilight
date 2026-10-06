@@ -117,16 +117,18 @@ class PlayerProvider extends ChangeNotifier {
         }
 
         if (state.processingState == ProcessingState.completed) {
-          // A song is ONLY naturally completed if it played near its expected duration
-          final bool isNearEnd = _totalDuration.inSeconds > 20 &&
-              (_currentPosition.inSeconds >=
-                      (_totalDuration.inSeconds * 0.85).toInt() ||
-                  (_totalDuration - _currentPosition).inSeconds <= 15);
+          // If the track played for at least 15 seconds, or reached near duration end,
+          // treat it as naturally completed and transition to next song.
+          final bool isNaturalCompletion = _currentPosition.inSeconds >= 15 ||
+              (_totalDuration.inSeconds > 0 &&
+                  (_currentPosition.inSeconds >=
+                          (_totalDuration.inSeconds * 0.75).toInt() ||
+                      (_totalDuration - _currentPosition).inSeconds <= 20));
 
-          if (isNearEnd) {
+          if (isNaturalCompletion) {
             onTrackEnded();
           } else {
-            // Premature stream completion (unexpected network drop)
+            // Premature stream completion (unexpected network drop within first 15 seconds)
             AppLogger.warning(
                 'Interrupted stream at ${_currentPosition.inSeconds}s of ${_totalDuration.inSeconds}s. Attempting auto-recovery...');
             final pos = _currentPosition;
@@ -512,7 +514,7 @@ class PlayerProvider extends ChangeNotifier {
   /// if a socket drops or an unexpected stream completion event occurs.
   Future<void> _autoRecoverPlayback(Duration resumePos) async {
     if (_isAutoRecovering || _currentSong == null) return;
-    if (_autoRecoveryAttempts >= 1) {
+    if (_autoRecoveryAttempts >= 3) {
       AppLogger.warning(
           'Max auto-recovery attempts reached for "${_currentSong!.title}". Halting.');
       _isLoading = false;
@@ -525,9 +527,12 @@ class PlayerProvider extends ChangeNotifier {
     _isAutoRecovering = true;
     try {
       AppLogger.info(
-          'Auto-recovering playback for "${_currentSong!.title}" at ${resumePos.inSeconds}s (attempt $_autoRecoveryAttempts)...');
+          'Auto-recovering playback for "${_currentSong!.title}" at ${resumePos.inSeconds}s (attempt $_autoRecoveryAttempts/3)...');
       AudioStreamExtractor.invalidateCache(_currentSong!.id);
       _errorMessage = null;
+      if (_autoRecoveryAttempts > 1) {
+        await Future.delayed(Duration(milliseconds: 300 * _autoRecoveryAttempts));
+      }
       await playSong(_currentSong!, queueIndex: _currentIndex);
       if (resumePos > const Duration(seconds: 2)) {
         seekTo(resumePos);

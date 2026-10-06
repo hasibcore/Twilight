@@ -9,4 +9,5 @@ build/
 *.ipa
 *.zip
 *.tar.gz
+*.exe
 landing/downloads/

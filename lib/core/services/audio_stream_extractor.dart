@@ -96,7 +96,7 @@ class AudioStreamExtractor {
   static final Map<String, AudioStreamResult> _cache = {};
   static final Map<String, DateTime> _cacheTime = {};
   static const int _maxCacheSize = 100;
-  static const Duration _cacheTTL = Duration(minutes: 5, seconds: 30);
+  static const Duration _cacheTTL = Duration(minutes: 3, seconds: 45);
 
   static void _setCache(String key, AudioStreamResult result) {
     if (_cache.length >= _maxCacheSize) {
@@ -355,13 +355,13 @@ class AudioStreamExtractor {
   /// Extracts unthrottled audio stream via public Invidious / Piped instances
   static Future<AudioStreamResult?> _extractFromInvidious(
       String videoId) async {
-    for (final inst in _invidiousInstances) {
+    for (final inst in _invidiousInstances.take(3)) {
       try {
         final uri = Uri.parse('$inst/api/v1/videos/$videoId');
         final res = await http.get(
           uri,
           headers: {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'},
-        ).timeout(const Duration(seconds: 5));
+        ).timeout(const Duration(seconds: 3));
 
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body);

@@ -143,12 +143,12 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
               <span>Launch & Install App (PWA)</span>
             </button>
             <a
-              href="https://github.com/hasibcore/Twilight/releases/latest/download/Twilight-Android-v1.0.1.apk"
-              download="Twilight-Android-v1.0.1.apk"
+              href="/downloads/Twilight-Android.apk"
+              download="Twilight-Android.apk"
               className="w-full py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs flex items-center justify-center gap-2 border border-slate-700/60 transition-all text-center"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Download Standalone APK</span>
+              <span>Download Mobile APK (Android)</span>
             </a>
           </div>
         </div>
@@ -167,12 +167,20 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
 
           <div className="flex flex-col gap-2">
             <a
-              href="https://github.com/hasibcore/Twilight/releases/latest/download/Twilight-Windows-x64-v1.0.1.zip"
-              download="Twilight-Windows-x64-v1.0.1.zip"
+              href="/downloads/Twilight-Windows-x64.zip"
+              download="Twilight-Windows-x64.zip"
               className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition-all text-center"
             >
               <Download className="w-4 h-4" />
-              <span>Download for Windows (x64)</span>
+              <span>Download PC Package (.zip)</span>
+            </a>
+            <a
+              href="/downloads/Twilight-Music-PC.exe"
+              download="Twilight-Music-PC.exe"
+              className="w-full py-2 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs flex items-center justify-center gap-2 border border-slate-700/60 transition-all text-center"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Download PC Standalone (.exe)</span>
             </a>
           </div>
         </div>
@@ -191,13 +199,22 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
 
           <div className="flex flex-col gap-2">
             <a
-              href="https://github.com/hasibcore/Twilight/releases/latest/download/Twilight-iOS.ipa"
+              href="/downloads/Twilight-iOS.ipa"
               download="Twilight-iOS.ipa"
               className="w-full py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 transition-all text-center"
             >
               <Download className="w-4 h-4" />
-              <span>Download for iOS (IPA)</span>
+              <span>Download for iOS (.ipa)</span>
             </a>
+            <button
+              onClick={() => {
+                alert("iOS Install Guide:\n1. Open this website in Safari on your iPhone/iPad.\n2. Tap the Share button (square with arrow up).\n3. Tap 'Add to Home Screen'.\nTwilight Music will be installed as a full standalone app!");
+              }}
+              className="w-full py-2 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs flex items-center justify-center gap-2 border border-slate-700/60 transition-all text-center cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-rose-400" />
+              <span>How to Install on iPhone (Guide)</span>
+            </button>
           </div>
         </div>
       </div>
