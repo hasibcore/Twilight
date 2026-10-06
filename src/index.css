@@ -7,7 +7,71 @@
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
   }
+}
+
+/* Equalizer bounce keyframe animations */
+@keyframes eqBounce1 {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+
+@keyframes eqBounce2 {
+  0%, 100% { height: 16px; }
+  50% { height: 6px; }
+}
+
+@keyframes eqBounce3 {
+  0%, 100% { height: 8px; }
+  50% { height: 18px; }
+}
+
+@keyframes ambientGlowPulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.04);
+  }
+}
+
+.animate-eq-1 {
+  animation: eqBounce1 0.8s ease-in-out infinite;
+}
+
+.animate-eq-2 {
+  animation: eqBounce2 0.65s ease-in-out infinite;
+}
+
+.animate-eq-3 {
+  animation: eqBounce3 0.9s ease-in-out infinite;
+}
+
+.animate-ambient-glow {
+  animation: ambientGlowPulse 4s ease-in-out infinite;
+}
+
+/* Glassmorphism custom utilities */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 12px 30px -10px rgba(99, 102, 241, 0.2);
 }
 
 /* Custom smooth scrollbars */
@@ -23,5 +87,6 @@
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(99, 102, 241, 0.5);
 }
+

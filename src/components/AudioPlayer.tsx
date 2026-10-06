@@ -99,22 +99,38 @@ export const AudioPlayer: React.FC = () => {
         <div className="flex items-center gap-3.5 min-w-0 max-w-[45%] md:max-w-[30%]">
           <div
             onClick={() => setIsExpanded(true)}
-            className="w-12 h-12 rounded-xl overflow-hidden relative cursor-pointer group shrink-0 bg-slate-800 shadow-md"
+            className="w-12 h-12 rounded-xl overflow-hidden relative cursor-pointer group shrink-0 bg-slate-800 shadow-lg border border-white/10"
           >
             <img
               src={currentSong.thumbnailUrl}
               alt={currentSong.title}
               className={`w-full h-full object-cover group-hover:scale-105 transition-transform ${
-                isPlaying ? 'animate-pulse' : ''
+                isPlaying ? 'brightness-105' : ''
               }`}
             />
+            {isPlaying && (
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-end justify-center gap-1 pb-1.5 pointer-events-none">
+                <span className="w-1 bg-indigo-400 rounded-full animate-eq-1" />
+                <span className="w-1 bg-purple-400 rounded-full animate-eq-2" />
+                <span className="w-1 bg-pink-400 rounded-full animate-eq-3" />
+              </div>
+            )}
           </div>
 
           <div
             onClick={() => setIsExpanded(true)}
             className="min-w-0 cursor-pointer"
           >
-            <h4 className="text-sm font-bold text-white truncate hover:underline">{currentSong.title}</h4>
+            <div className="flex items-center gap-1.5">
+              <h4 className="text-sm font-bold text-white truncate hover:underline">{currentSong.title}</h4>
+              {isPlaying && (
+                <div className="hidden sm:flex items-center gap-0.5 shrink-0 px-1.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+                  <span className="w-0.5 h-2 bg-indigo-400 rounded-full animate-eq-1" />
+                  <span className="w-0.5 h-3 bg-purple-400 rounded-full animate-eq-2" />
+                  <span className="w-0.5 h-2 bg-pink-400 rounded-full animate-eq-3" />
+                </div>
+              )}
+            </div>
             <p className="text-xs text-slate-400 truncate">{currentSong.artist}</p>
           </div>
 
@@ -243,7 +259,16 @@ export const AudioPlayer: React.FC = () => {
             </button>
 
             <div className="text-center">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-400">Playing From Mix</span>
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-400">Playing From Mix</span>
+                {isPlaying && (
+                  <div className="flex items-center gap-0.5">
+                    <span className="w-0.5 h-2 bg-indigo-400 rounded-full animate-eq-1" />
+                    <span className="w-0.5 h-3 bg-purple-400 rounded-full animate-eq-2" />
+                    <span className="w-0.5 h-2 bg-pink-400 rounded-full animate-eq-3" />
+                  </div>
+                )}
+              </div>
               <p className="text-xs font-semibold text-white">Twilight Studio Master</p>
             </div>
 
@@ -258,20 +283,24 @@ export const AudioPlayer: React.FC = () => {
 
           {/* Center Stage: Artwork & Details */}
           <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full py-6">
-            <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-3xl overflow-hidden shadow-2xl relative group bg-slate-900 border border-white/10 mb-8">
-              <img
-                src={currentSong.thumbnailUrl}
-                alt={currentSong.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-emerald-400 border border-emerald-500/20">
-                  {audioQuality}
-                </span>
-                <span className="text-[11px] text-slate-300 font-mono bg-black/60 px-2 py-0.5 rounded-full">
-                  YouTube Audio
-                </span>
+            <div className="relative mb-8">
+              {/* Dynamic ambient backlight aura */}
+              <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-indigo-500/30 via-purple-500/25 to-pink-500/30 blur-2xl -z-10 animate-ambient-glow" />
+              <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-3xl overflow-hidden shadow-2xl relative group bg-slate-900 border border-white/10">
+                <img
+                  src={currentSong.thumbnailUrl}
+                  alt={currentSong.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-emerald-400 border border-emerald-500/20">
+                    {audioQuality}
+                  </span>
+                  <span className="text-[11px] text-slate-300 font-mono bg-black/60 px-2 py-0.5 rounded-full">
+                    YouTube Audio
+                  </span>
+                </div>
               </div>
             </div>
 

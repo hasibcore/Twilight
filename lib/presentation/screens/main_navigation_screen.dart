@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -90,7 +91,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
-            color: AppColors.backgroundDark,
+            color: const Color(0xE6030712),
             border: Border(
               top: BorderSide(
                 color: Colors.white.withValues(alpha: 0.08),
@@ -98,22 +99,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               ),
             ),
           ),
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            backgroundColor: AppColors.backgroundDark,
-            selectedItemColor: AppColors.primaryAccent,
-            unselectedItemColor: AppColors.textTertiaryDark,
-            type: BottomNavigationBarType.fixed,
-            elevation: 12,
-            selectedFontSize: 11,
-            unselectedFontSize: 11,
-            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: BottomNavigationBar(
+                currentIndex: _currentIndex,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                selectedItemColor: AppColors.primaryAccent,
+                unselectedItemColor: AppColors.textTertiaryDark,
+                type: BottomNavigationBarType.fixed,
+                selectedFontSize: 11,
+                unselectedFontSize: 11,
+                selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+                onTap: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                },
             items: const [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home_outlined),
@@ -144,6 +148,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
+
+

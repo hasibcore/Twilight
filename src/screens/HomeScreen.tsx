@@ -76,7 +76,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const timeVibe = getTimeBasedVibe();
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 relative">
+      {/* Subtle Ambient Lighting Orbs */}
+      <div className="absolute -top-10 right-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none -z-10 animate-ambient-glow" />
+      <div className="absolute top-64 -left-10 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-96 right-10 w-72 h-72 bg-rose-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
       {/* Top Header / Greeting Bar */}
       <div className="flex items-center justify-between gap-4">
         <div>

@@ -151,23 +151,29 @@ class _FullPlayerScreenState extends State<FullPlayerScreen>
               ),
               const Spacer(),
 
-              // Beautiful Artwork Display
+              // Beautiful Artwork Display with Ambient Glow
               Center(
                 child: Container(
-                  width: MediaQuery.of(context).size.width * 0.85,
-                  height: MediaQuery.of(context).size.width * 0.85,
+                  width: MediaQuery.of(context).size.width * 0.82,
+                  height: MediaQuery.of(context).size.width * 0.82,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        blurRadius: 28,
+                        color: AppColors.primary.withValues(alpha: 0.35),
+                        blurRadius: 40,
+                        spreadRadius: 2,
                         offset: const Offset(0, 10),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.75),
+                        blurRadius: 28,
+                        offset: const Offset(0, 14),
                       ),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(22),
                     child: _buildArtworkWidget(currentSong, downloadProv),
                   ),
                 ),
@@ -411,215 +417,222 @@ class _FullPlayerScreenState extends State<FullPlayerScreen>
               ),
               const SizedBox(height: 12),
 
-              // Spotify Features Row (Speed, Autoplay, Lyrics, Queue)
+              // Spotify Features Row (Speed, Autoplay, Lyrics, AI DJ, Queue)
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Playback speed chip
-                    GestureDetector(
-                      onTap: () => _showSpeedSelectorSheet(context, player),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceVariantDark,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.speed,
-                                size: 14, color: Colors.white70),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${player.playbackSpeed}x',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: [
+                      // Playback speed chip
+                      GestureDetector(
+                        onTap: () => _showSpeedSelectorSheet(context, player),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceVariantDark,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.speed,
+                                  size: 14, color: Colors.white70),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${player.playbackSpeed}x',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
 
-                    // Autoplay quick-toggle chip
-                    GestureDetector(
-                      onTap: () {
-                        player.toggleAutoplay();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                Icon(
-                                  player.isAutoplay
-                                      ? Icons.autorenew_rounded
-                                      : Icons.pause_circle_outline,
-                                  color: player.isAutoplay
-                                      ? AppColors.primaryAccent
-                                      : Colors.white70,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(player.isAutoplay
-                                    ? 'Autoplay: ON (Endless Playback)'
-                                    : 'Autoplay: OFF'),
-                              ],
+                      // Autoplay quick-toggle chip
+                      GestureDetector(
+                        onTap: () {
+                          player.toggleAutoplay();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  Icon(
+                                    player.isAutoplay
+                                        ? Icons.autorenew_rounded
+                                        : Icons.pause_circle_outline,
+                                    color: player.isAutoplay
+                                        ? AppColors.primaryAccent
+                                        : Colors.white70,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(player.isAutoplay
+                                      ? 'Autoplay: ON (Endless Playback)'
+                                      : 'Autoplay: OFF'),
+                                ],
+                              ),
+                              duration: const Duration(seconds: 1),
                             ),
-                            duration: const Duration(seconds: 1),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: player.isAutoplay
+                                ? AppColors.primaryAccent.withValues(alpha: 0.2)
+                                : AppColors.surfaceVariantDark,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: player.isAutoplay
+                                    ? AppColors.primaryAccent
+                                    : Colors.white12),
                           ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: player.isAutoplay
-                              ? AppColors.primaryAccent.withValues(alpha: 0.2)
-                              : AppColors.surfaceVariantDark,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: player.isAutoplay
-                                  ? AppColors.primaryAccent
-                                  : Colors.white12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.autorenew_rounded,
-                              size: 14,
-                              color: player.isAutoplay
-                                  ? AppColors.primaryAccent
-                                  : Colors.white70,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              player.isAutoplay ? 'Auto ON' : 'Auto OFF',
-                              style: TextStyle(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.autorenew_rounded,
+                                size: 14,
                                 color: player.isAutoplay
                                     ? AppColors.primaryAccent
                                     : Colors.white70,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Lyrics button
-                    GestureDetector(
-                      onTap: () => _showLyricsSheet(context, currentSong),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceVariantDark,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white12),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.lyrics_outlined,
-                                size: 14, color: Colors.white70),
-                            SizedBox(width: 4),
-                            Text(
-                              'Lyrics',
-                              style: TextStyle(
-                                  color: Colors.white,
+                              const SizedBox(width: 4),
+                              Text(
+                                player.isAutoplay ? 'Auto ON' : 'Auto OFF',
+                                style: TextStyle(
+                                  color: player.isAutoplay
+                                      ? AppColors.primaryAccent
+                                      : Colors.white70,
                                   fontSize: 11,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // AI DJ Smart Mix Button (Matching Image 1)
-                    GestureDetector(
-                      onTap: () {
-                        player.toggleAutoplay();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Row(
-                              children: [
-                                Icon(Icons.auto_awesome,
-                                    color: Color(0xFF818CF8), size: 18),
-                                SizedBox(width: 8),
-                                Text('AI DJ: Smart Taste Radio Activated!'),
-                              ],
-                            ),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFF6366F1),
-                              Color(0xFFA855F7),
-                              Color(0xFFEC4899)
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF6366F1)
-                                  .withValues(alpha: 0.4),
-                              blurRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.auto_awesome,
-                                size: 14, color: Colors.white),
-                            SizedBox(width: 4),
-                            Text(
-                              'AI DJ',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
 
-                    // Up Next Queue Button
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.surfaceVariantDark,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
+                      // Lyrics button
+                      GestureDetector(
+                        onTap: () => _showLyricsSheet(context, currentSong),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceVariantDark,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.lyrics_outlined,
+                                  size: 14, color: Colors.white70),
+                              SizedBox(width: 4),
+                              Text(
+                                'Lyrics',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      icon: const Icon(Icons.queue_music, size: 15),
-                      label: Text('Queue (${player.queue.length})',
-                          style: const TextStyle(fontSize: 11)),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => const QueueScreen()),
-                        );
-                      },
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+
+                      // AI DJ Smart Mix Button (Matching Image 1)
+                      GestureDetector(
+                        onTap: () {
+                          player.toggleAutoplay();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Row(
+                                children: [
+                                  Icon(Icons.auto_awesome,
+                                      color: Color(0xFF818CF8), size: 18),
+                                  SizedBox(width: 8),
+                                  Text('AI DJ: Smart Taste Radio Activated!'),
+                                ],
+                              ),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFF6366F1),
+                                Color(0xFFA855F7),
+                                Color(0xFFEC4899)
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF6366F1)
+                                    .withValues(alpha: 0.4),
+                                blurRadius: 8,
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.auto_awesome,
+                                  size: 14, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text(
+                                'AI DJ',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Up Next Queue Button
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.surfaceVariantDark,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                        ),
+                        icon: const Icon(Icons.queue_music, size: 15),
+                        label: Text('Queue (${player.queue.length})',
+                            style: const TextStyle(fontSize: 11)),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const QueueScreen()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 8),

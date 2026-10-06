@@ -407,19 +407,58 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          _vibeCache.clear();
-          await _loadHomeData();
-        },
-        color: AppColors.primaryAccent,
-        backgroundColor: AppColors.surfaceVariantDark,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(bottom: bottomPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 12),
+      body: Stack(
+        children: [
+          // Ambient Cosmic Indigo Glow (Top Right)
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 260,
+              height: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF6366F1).withValues(alpha: 0.16),
+                    const Color(0xFF8B5CF6).withValues(alpha: 0.06),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Ambient Warm Flame Glow (Behind Heavy Repeat)
+          Positioned(
+            top: 240,
+            left: -40,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFF97316).withValues(alpha: 0.10),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          RefreshIndicator(
+            onRefresh: () async {
+              _vibeCache.clear();
+              await _loadHomeData();
+            },
+            color: AppColors.primaryAccent,
+            backgroundColor: AppColors.surfaceVariantDark,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: bottomPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
 
               // 1. TOP HEADER / GREETING BAR (Matching Image 1)
               Padding(
@@ -655,7 +694,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-    );
+    ],
+  ),
+);
   }
 
   /// ON HEAVY REPEAT (MOST PLAYED) Glassmorphic Card (Image 1)
