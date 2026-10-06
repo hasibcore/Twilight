@@ -22,7 +22,7 @@ class AppLogo extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(size * 0.28),
             child: Image.asset(
-              'assets/images/twilight_b_icon.png',
+              'assets/images/twilight_icon.png',
               width: size,
               height: size,
               fit: BoxFit.cover,

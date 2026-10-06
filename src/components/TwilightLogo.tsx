@@ -19,10 +19,18 @@ export const TwilightLogo: React.FC<TwilightLogoProps> = ({
     >
       {!imgError ? (
         <img
-          src="/twilight_b_icon.svg"
+          src="/twilight_icon.svg"
           alt="Twilight Logo"
           className="w-full h-full object-cover block"
-          onError={() => setImgError(true)}
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (!target.dataset.triedPng) {
+              target.dataset.triedPng = 'true';
+              target.src = '/twilight_icon.png';
+            } else {
+              setImgError(true);
+            }
+          }}
         />
       ) : (
         <svg

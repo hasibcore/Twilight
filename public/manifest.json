@@ -11,19 +11,19 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/twilight_b_icon.png",
+      "src": "/twilight_icon.png",
       "sizes": "192x192 512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/twilight_b_icon.png",
+      "src": "/twilight_icon.png",
       "sizes": "192x192 512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/twilight_b_icon.svg",
+      "src": "/twilight_icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
