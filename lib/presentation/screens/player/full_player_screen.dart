@@ -542,6 +542,63 @@ class _FullPlayerScreenState extends State<FullPlayerScreen>
                       ),
                     ),
 
+                    // AI DJ Smart Mix Button (Matching Image 1)
+                    GestureDetector(
+                      onTap: () {
+                        player.toggleAutoplay();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(Icons.auto_awesome,
+                                    color: Color(0xFF818CF8), size: 18),
+                                SizedBox(width: 8),
+                                Text('AI DJ: Smart Taste Radio Activated!'),
+                              ],
+                            ),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF6366F1),
+                              Color(0xFFA855F7),
+                              Color(0xFFEC4899)
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF6366F1)
+                                  .withValues(alpha: 0.4),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.auto_awesome,
+                                size: 14, color: Colors.white),
+                            SizedBox(width: 4),
+                            Text(
+                              'AI DJ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
                     // Up Next Queue Button
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(

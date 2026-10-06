@@ -5,6 +5,7 @@ import '../providers/player_provider.dart';
 import '../providers/playlist_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../screens/player/full_player_screen.dart';
+import '../screens/player/queue_screen.dart';
 
 class MiniPlayerWidget extends StatelessWidget {
   const MiniPlayerWidget({super.key});
@@ -240,6 +241,20 @@ class MiniPlayerWidget extends StatelessWidget {
                       size: 24,
                     ),
                     onPressed: () => player.next(),
+                  ),
+                  // Queue Button (Matching Image 1)
+                  IconButton(
+                    tooltip: 'Queue',
+                    icon: Icon(
+                      Icons.queue_music_rounded,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                      size: 22,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const QueueScreen()),
+                      );
+                    },
                   ),
                 ],
               ),

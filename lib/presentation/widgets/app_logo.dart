@@ -16,14 +16,13 @@ class AppLogo extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // ignore: sized_box_for_whitespace
-        Container(
+        SizedBox(
           width: size,
           height: size,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(size * 0.25),
+            borderRadius: BorderRadius.circular(size * 0.28),
             child: Image.asset(
-              'assets/images/twilight_icon.png',
+              'assets/images/twilight_b_icon.png',
               width: size,
               height: size,
               fit: BoxFit.cover,
@@ -89,124 +88,57 @@ class _TwilightLogoPainter extends CustomPainter {
     final center = Offset(size.width * 0.5, size.height * 0.5);
     final w = size.width;
 
-    // 1. Deep Blue to Purple Starry Sky Background matching logo image
+    // 1. Dark indigo/purple rounded background (Matching TwilightLogo.tsx)
     final bgPaint = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFF0B1238), Color(0xFF1B0B3A), Color(0xFF3B083C)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(rect);
-
-    final RRect rrect =
-        RRect.fromRectAndRadius(rect, Radius.circular(size.width * 0.26));
-    canvas.drawRRect(rrect, bgPaint);
-
-    // 2. Horizontal Sound Wave Lines
-    final wavePaint = Paint()
-      ..color = const Color(0xFF00E5FF).withValues(alpha: 0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.02;
-
-    final wavePath = Path();
-    wavePath.moveTo(w * 0.08, center.dy);
-    wavePath.quadraticBezierTo(
-        w * 0.25, center.dy - w * 0.06, w * 0.4, center.dy);
-    wavePath.quadraticBezierTo(
-        w * 0.6, center.dy + w * 0.06, w * 0.75, center.dy);
-    wavePath.quadraticBezierTo(
-        w * 0.88, center.dy - w * 0.04, w * 0.92, center.dy);
-    canvas.drawPath(wavePath, wavePaint);
-
-    // 3. Glowing Crescent Moon
-    final moonCenter = Offset(center.dx - w * 0.05, center.dy);
-    final moonRadius = w * 0.32;
-
-    final moonPath = Path();
-    moonPath.addArc(
-        Rect.fromCircle(center: moonCenter, radius: moonRadius), -2.2, 3.4);
-    moonPath.arcTo(
-      Rect.fromCircle(
-          center: Offset(moonCenter.dx + w * 0.14, moonCenter.dy - w * 0.05),
-          radius: moonRadius * 0.85),
-      1.2,
-      -3.4,
-      false,
-    );
-    moonPath.close();
-
-    final moonPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFFFFFE0), Color(0xFF80FFEA), Color(0xFF00E5FF)],
+        colors: [Color(0xFF110926), Color(0xFF0A0518), Color(0xFF1A0B36)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-      ).createShader(rect)
-      ..style = PaintingStyle.fill;
+      ).createShader(rect);
 
-    canvas.drawPath(moonPath, moonPaint);
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(w * 0.28));
+    canvas.drawRRect(rrect, bgPaint);
 
-    // 4. Glowing Cyan Musical Double Note (♫)
-    final notePath = Path();
-    final nX = center.dx - w * 0.08;
-    final nY = center.dy - w * 0.14;
-
-    // Left Note Head
-    notePath.addOval(
-        Rect.fromCircle(center: Offset(nX, nY + w * 0.28), radius: w * 0.08));
-    // Right Note Head
-    notePath.addOval(Rect.fromCircle(
-        center: Offset(nX + w * 0.22, nY + w * 0.22), radius: w * 0.08));
-
-    // Stems & Beam
-    notePath.moveTo(nX + w * 0.06, nY + w * 0.28);
-    notePath.lineTo(nX + w * 0.06, nY);
-    notePath.lineTo(nX + w * 0.28, nY - w * 0.06);
-    notePath.lineTo(nX + w * 0.28, nY + w * 0.22);
-
-    final notePaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFE0FF4F), Color(0xFF00E5FF), Color(0xFF18FFFF)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(rect)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(notePath, notePaint);
-
-    final noteStroke = Paint()
-      ..color = const Color(0xFF00E5FF)
+    // 2. Concentric ring gradient
+    final ringPaint = Paint()
+      ..shader = const SweepGradient(
+        colors: [
+          Color(0xFFFF3388),
+          Color(0xFFF72585),
+          Color(0xFF7209B7),
+          Color(0xFF3A86FF),
+          Color(0xFF4CC9F0),
+          Color(0xFFFF3388),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: w * 0.35))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.035
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = w * 0.08;
 
-    final beamPath = Path();
-    beamPath.moveTo(nX + w * 0.06, nY + w * 0.28);
-    beamPath.lineTo(nX + w * 0.06, nY);
-    beamPath.lineTo(nX + w * 0.28, nY - w * 0.06);
-    beamPath.lineTo(nX + w * 0.28, nY + w * 0.22);
-    canvas.drawPath(beamPath, noteStroke);
+    canvas.drawCircle(center, w * 0.28, ringPaint);
 
-    // 5. Sparkle Stars
-    _drawStar(
-        canvas, Offset(w * 0.2, w * 0.2), w * 0.025, const Color(0xFFE8FFB7));
-    _drawStar(
-        canvas, Offset(w * 0.8, w * 0.22), w * 0.03, const Color(0xFF80FFEA));
-    _drawStar(
-        canvas, Offset(w * 0.88, w * 0.55), w * 0.02, const Color(0xFFFFFFFF));
-    _drawStar(
-        canvas, Offset(w * 0.15, w * 0.72), w * 0.02, const Color(0xFF80FFEA));
-  }
+    // 3. Orbit satellite dot
+    final dotPaint = Paint()..color = const Color(0xFFFF2A85);
+    canvas.drawCircle(
+        Offset(center.dx + w * 0.25, center.dy - w * 0.22), w * 0.035, dotPaint);
 
-  void _drawStar(Canvas canvas, Offset pos, double r, Color color) {
-    final paint = Paint()
-      ..color = color
+    // 4. Center Play triangle gradient
+    final playPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFFF4088), Color(0xFFD92588), Color(0xFF7209B7)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(Rect.fromCircle(center: center, radius: w * 0.2))
       ..style = PaintingStyle.fill;
-    final path = Path();
-    path.moveTo(pos.dx, pos.dy - r);
-    path.quadraticBezierTo(pos.dx, pos.dy, pos.dx + r, pos.dy);
-    path.quadraticBezierTo(pos.dx, pos.dy, pos.dx, pos.dy + r);
-    path.quadraticBezierTo(pos.dx, pos.dy, pos.dx - r, pos.dy);
-    path.quadraticBezierTo(pos.dx, pos.dy, pos.dx, pos.dy - r);
-    canvas.drawPath(path, paint);
+
+    final playPath = Path();
+    final pW = w * 0.16;
+    final pH = w * 0.2;
+    playPath.moveTo(center.dx - pW * 0.4, center.dy - pH * 0.5);
+    playPath.lineTo(center.dx + pW * 0.65, center.dy);
+    playPath.lineTo(center.dx - pW * 0.4, center.dy + pH * 0.5);
+    playPath.close();
+
+    canvas.drawPath(playPath, playPaint);
   }
 
   @override
