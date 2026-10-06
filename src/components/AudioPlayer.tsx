@@ -95,11 +95,11 @@ export const AudioPlayer: React.FC = () => {
           </div>
         </div>
 
-        {/* Left: Song Info */}
-        <div className="flex items-center gap-3.5 min-w-0 max-w-[45%] md:max-w-[30%]">
+        {/* Left: Song Info (Generous width on mobile, max-w-[30%] on desktop) */}
+        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1 md:flex-initial md:max-w-[30%] pr-2 md:pr-0">
           <div
             onClick={() => setIsExpanded(true)}
-            className="w-12 h-12 rounded-xl overflow-hidden relative cursor-pointer group shrink-0 bg-slate-800 shadow-lg border border-white/10"
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden relative cursor-pointer group shrink-0 bg-slate-800 shadow-lg border border-white/10"
           >
             <img
               src={currentSong.thumbnailUrl}
@@ -109,20 +109,20 @@ export const AudioPlayer: React.FC = () => {
               }`}
             />
             {isPlaying && (
-              <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-end justify-center gap-1 pb-1.5 pointer-events-none">
-                <span className="w-1 bg-indigo-400 rounded-full animate-eq-1" />
-                <span className="w-1 bg-purple-400 rounded-full animate-eq-2" />
-                <span className="w-1 bg-pink-400 rounded-full animate-eq-3" />
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-end justify-center gap-0.5 sm:gap-1 pb-1 pointer-events-none">
+                <span className="w-0.5 sm:w-1 bg-indigo-400 rounded-full animate-eq-1" />
+                <span className="w-0.5 sm:w-1 bg-purple-400 rounded-full animate-eq-2" />
+                <span className="w-0.5 sm:w-1 bg-pink-400 rounded-full animate-eq-3" />
               </div>
             )}
           </div>
 
           <div
             onClick={() => setIsExpanded(true)}
-            className="min-w-0 cursor-pointer"
+            className="min-w-0 flex-1 cursor-pointer pr-1"
           >
             <div className="flex items-center gap-1.5">
-              <h4 className="text-sm font-bold text-white truncate hover:underline">{currentSong.title}</h4>
+              <h4 className="text-xs sm:text-sm font-bold text-white truncate hover:underline">{currentSong.title}</h4>
               {isPlaying && (
                 <div className="hidden sm:flex items-center gap-0.5 shrink-0 px-1.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
                   <span className="w-0.5 h-2 bg-indigo-400 rounded-full animate-eq-1" />
@@ -131,7 +131,7 @@ export const AudioPlayer: React.FC = () => {
                 </div>
               )}
             </div>
-            <p className="text-xs text-slate-400 truncate">{currentSong.artist}</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 truncate">{currentSong.artist}</p>
           </div>
 
           <button
@@ -144,9 +144,9 @@ export const AudioPlayer: React.FC = () => {
           </button>
         </div>
 
-        {/* Center: Playback Controls */}
-        <div className="flex flex-col items-center gap-1">
-          <div className="flex items-center gap-2 md:gap-4">
+        {/* Center / Controls */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0 md:flex-col md:gap-1">
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
             <button
               onClick={toggleShuffle}
               className={`p-2 rounded-full hidden sm:block transition-colors ${
@@ -158,30 +158,30 @@ export const AudioPlayer: React.FC = () => {
 
             <button
               onClick={prevSong}
-              className="p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+              className="p-1 sm:p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
             >
-              <SkipBack className="w-5 h-5 fill-current" />
+              <SkipBack className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
             </button>
 
             <button
               onClick={() => (isPlaying ? pauseSong() : resumeSong())}
               disabled={isLoading}
-              className="w-11 h-11 rounded-full bg-white text-slate-950 flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-white/10"
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white text-slate-950 flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-white/10"
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
               ) : isPlaying ? (
-                <Pause className="w-5 h-5 fill-slate-950" />
+                <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-slate-950" />
               ) : (
-                <Play className="w-5 h-5 fill-slate-950 translate-x-0.5" />
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-slate-950 translate-x-0.5" />
               )}
             </button>
 
             <button
               onClick={nextSong}
-              className="p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+              className="p-1 sm:p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
             >
-              <SkipForward className="w-5 h-5 fill-current" />
+              <SkipForward className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
             </button>
 
             <button
@@ -194,15 +194,15 @@ export const AudioPlayer: React.FC = () => {
             </button>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+          <div className="hidden md:flex items-center gap-2 text-[10px] text-slate-400 font-mono">
             <span>{formatTime(currentTime)}</span>
             <span>/</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
 
-        {/* Right: Actions & Volume */}
-        <div className="flex items-center gap-2">
+        {/* Right: Actions, Volume & AI DJ */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
             onClick={() => setShowLyrics(true)}
             className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/5 transition-colors hidden lg:block"
@@ -213,10 +213,10 @@ export const AudioPlayer: React.FC = () => {
 
           <button
             onClick={() => setShowQueue(true)}
-            className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1.5 sm:p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/5 transition-colors hidden sm:block"
             title="Queue"
           >
-            <ListMusic className="w-5 h-5" />
+            <ListMusic className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           <div className="hidden md:flex items-center gap-2 pl-2">
@@ -237,11 +237,25 @@ export const AudioPlayer: React.FC = () => {
             />
           </div>
 
+          {/* AI Equalizer & DJ Trigger (Matching Image 1 Desktop & Mobile) */}
           <button
             onClick={() => setIsExpanded(true)}
-            className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/5 md:hidden"
+            title="Twilight AI Music Engine"
+            className="p-1 rounded-full hover:scale-105 active:scale-95 transition-transform"
           >
-            <ChevronDown className="w-5 h-5 rotate-180" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-pink-500 via-indigo-500 to-cyan-400 p-0.5 shadow-md shadow-indigo-500/30 flex items-center justify-center">
+              <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-300 animate-pulse" />
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/5 md:hidden"
+            title="Expand Full Player"
+          >
+            <ChevronDown className="w-4 h-4 rotate-180" />
           </button>
         </div>
       </div>

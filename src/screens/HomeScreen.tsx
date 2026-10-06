@@ -151,12 +151,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-2">
-            {frequentTracks.slice(0, 5).map((song) => (
+          <div className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-2 overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 scrollbar-none snap-x">
+            {frequentTracks.slice(0, 8).map((song) => (
               <div
                 key={`freq_${song.id}`}
                 onClick={() => playSong(song, frequentTracks)}
-                className="group relative bg-slate-900/60 hover:bg-slate-800/80 border border-white/5 hover:border-orange-500/30 rounded-2xl p-2.5 transition-all cursor-pointer flex flex-col justify-between"
+                className="group relative w-36 sm:w-auto shrink-0 sm:shrink snap-start bg-slate-900/60 hover:bg-slate-800/80 border border-white/5 hover:border-orange-500/30 rounded-2xl p-2.5 transition-all cursor-pointer flex flex-col justify-between"
               >
                 <div className="relative aspect-square rounded-xl overflow-hidden mb-2 bg-slate-800">
                   <img src={song.thumbnailUrl} alt={song.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -202,12 +202,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
-          {dynamicSongs.slice(0, 6).map((song) => (
+        <div className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 scrollbar-none snap-x">
+          {dynamicSongs.slice(0, 8).map((song) => (
             <div
               key={`dyn_${song.id}`}
               onClick={() => playSong(song, dynamicSongs)}
-              className="group bg-slate-900/60 hover:bg-slate-800/80 border border-white/5 hover:border-indigo-500/30 rounded-2xl p-2.5 transition-all cursor-pointer flex flex-col justify-between"
+              className="group w-36 sm:w-auto shrink-0 sm:shrink snap-start bg-slate-900/60 hover:bg-slate-800/80 border border-white/5 hover:border-indigo-500/30 rounded-2xl p-2.5 transition-all cursor-pointer flex flex-col justify-between"
             >
               <div className="relative aspect-square rounded-xl overflow-hidden mb-2 bg-slate-800">
                 <img
@@ -320,6 +320,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           ))}
         </div>
       </section>
+
+      {/* 256 kbps Audio Quality Badge on Mobile (Parity with Desktop Sidebar Card) */}
+      <div className="md:hidden pt-2">
+        <div className="bg-gradient-to-br from-indigo-950/40 to-purple-950/40 border border-indigo-500/20 rounded-2xl p-4 text-xs text-slate-300">
+          <div className="flex items-center gap-2 text-indigo-400 font-semibold mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            256 kbps High-Fidelity Audio
+          </div>
+          <p className="text-slate-400 text-xs leading-relaxed">
+            High-fidelity playback with cloud sync & offline cache.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

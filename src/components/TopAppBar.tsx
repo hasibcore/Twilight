@@ -29,7 +29,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
           <span className="text-lg sm:text-xl font-black tracking-tight text-white group-hover:text-indigo-200 transition-colors">
             Twilight
           </span>
-          <span className="hidden sm:inline text-[10px] uppercase font-bold tracking-widest text-indigo-400">
+          <span className="text-[10px] uppercase font-extrabold tracking-widest text-indigo-400">
             Music
           </span>
         </div>
