@@ -22,7 +22,10 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.cardDark,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.cardBorder, width: 1),
+        ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.backgroundDark,
@@ -36,20 +39,20 @@ class AppTheme {
         iconTheme: IconThemeData(color: AppColors.textPrimaryDark),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surfaceDark,
+        backgroundColor: AppColors.backgroundDark,
         selectedItemColor: AppColors.primaryAccent,
         unselectedItemColor: AppColors.textTertiaryDark,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: 12,
         selectedLabelStyle:
-            TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: TextStyle(fontSize: 12),
+            TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        unselectedLabelStyle: TextStyle(fontSize: 11),
       ),
       sliderTheme: SliderThemeData(
-        activeTrackColor: AppColors.primary,
+        activeTrackColor: AppColors.primaryAccent,
         inactiveTrackColor: AppColors.surfaceVariantDark,
-        thumbColor: AppColors.primary,
-        overlayColor: AppColors.primary.withValues(alpha: 0.2),
+        thumbColor: Colors.white,
+        overlayColor: AppColors.primaryAccent.withValues(alpha: 0.2),
         trackHeight: 3.0,
         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
       ),
@@ -60,7 +63,7 @@ class AppTheme {
             const TextStyle(color: AppColors.textSecondaryDark, fontSize: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.cardBorder),
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -86,7 +89,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.cardLight,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.backgroundLight,
@@ -106,8 +109,8 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 8,
         selectedLabelStyle:
-            TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: TextStyle(fontSize: 12),
+            TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        unselectedLabelStyle: TextStyle(fontSize: 11),
       ),
       sliderTheme: SliderThemeData(
         activeTrackColor: AppColors.primary,

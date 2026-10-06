@@ -7,6 +7,7 @@ import '../providers/player_provider.dart';
 import '../widgets/mini_player_widget.dart';
 import 'home/home_screen.dart';
 import 'explore/explore_screen.dart';
+import 'search/search_screen.dart';
 import 'library/library_screen.dart';
 import 'profile/profile_screen.dart';
 
@@ -24,6 +25,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = const [
     HomeScreen(),
     ExploreScreen(),
+    SearchScreen(),
     LibraryScreen(),
     ProfileScreen(),
   ];
@@ -88,16 +90,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
-            color: AppColors.surfaceDark,
+            color: AppColors.backgroundDark,
             border: Border(
               top: BorderSide(
-                color: Colors.white.withValues(alpha: 0.06),
+                color: Colors.white.withValues(alpha: 0.08),
                 width: 1.0,
               ),
             ),
           ),
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
+            backgroundColor: AppColors.backgroundDark,
+            selectedItemColor: AppColors.primaryAccent,
+            unselectedItemColor: AppColors.textTertiaryDark,
+            type: BottomNavigationBarType.fixed,
+            elevation: 12,
+            selectedFontSize: 11,
+            unselectedFontSize: 11,
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
             onTap: (index) {
               setState(() {
                 _currentIndex = index;
@@ -113,6 +124,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 icon: Icon(Icons.explore_outlined),
                 activeIcon: Icon(Icons.explore),
                 label: AppStrings.navExplore,
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.search_rounded),
+                activeIcon: Icon(Icons.search_rounded),
+                label: AppStrings.navSearch,
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.library_music_outlined),

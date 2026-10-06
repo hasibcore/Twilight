@@ -7,6 +7,7 @@ class Song {
   final int durationSeconds;
   final String durationFormatted;
   final int viewCount;
+  final int playCount;
   final DateTime? publishedAt;
   final bool isFavorite;
 
@@ -19,6 +20,7 @@ class Song {
     required this.durationSeconds,
     required this.durationFormatted,
     this.viewCount = 0,
+    this.playCount = 0,
     this.publishedAt,
     this.isFavorite = false,
   });
@@ -32,6 +34,7 @@ class Song {
     int? durationSeconds,
     String? durationFormatted,
     int? viewCount,
+    int? playCount,
     DateTime? publishedAt,
     bool? isFavorite,
   }) {
@@ -44,6 +47,7 @@ class Song {
       durationSeconds: durationSeconds ?? this.durationSeconds,
       durationFormatted: durationFormatted ?? this.durationFormatted,
       viewCount: viewCount ?? this.viewCount,
+      playCount: playCount ?? this.playCount,
       publishedAt: publishedAt ?? this.publishedAt,
       isFavorite: isFavorite ?? this.isFavorite,
     );

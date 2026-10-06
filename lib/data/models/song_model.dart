@@ -10,6 +10,7 @@ class SongModel {
   final int durationSeconds;
   final String durationFormatted;
   final int viewCount;
+  final int playCount;
   final DateTime? publishedAt;
   final bool isFavorite;
 
@@ -22,6 +23,7 @@ class SongModel {
     required this.durationSeconds,
     required this.durationFormatted,
     this.viewCount = 0,
+    this.playCount = 0,
     this.publishedAt,
     this.isFavorite = false,
   });
@@ -36,6 +38,7 @@ class SongModel {
       durationSeconds: durationSeconds,
       durationFormatted: durationFormatted,
       viewCount: viewCount,
+      playCount: playCount,
       publishedAt: publishedAt,
       isFavorite: isFavorite,
     );
@@ -51,6 +54,7 @@ class SongModel {
       durationSeconds: entity.durationSeconds,
       durationFormatted: entity.durationFormatted,
       viewCount: entity.viewCount,
+      playCount: entity.playCount,
       publishedAt: entity.publishedAt,
       isFavorite: entity.isFavorite,
     );
@@ -66,6 +70,7 @@ class SongModel {
       durationSeconds: (json['durationSeconds'] as num?)?.toInt() ?? 0,
       durationFormatted: json['durationFormatted'] as String? ?? '00:00',
       viewCount: (json['viewCount'] as num?)?.toInt() ?? 0,
+      playCount: (json['playCount'] as num?)?.toInt() ?? 0,
       publishedAt: json['publishedAt'] != null
           ? DateTime.tryParse(json['publishedAt'].toString())
           : null,
@@ -83,6 +88,7 @@ class SongModel {
       'durationSeconds': durationSeconds,
       'durationFormatted': durationFormatted,
       'viewCount': viewCount,
+      'playCount': playCount,
       'publishedAt': publishedAt?.toIso8601String(),
       'isFavorite': isFavorite,
     };
@@ -142,6 +148,7 @@ class SongModel {
       durationSeconds: durationSecs,
       durationFormatted: Formatters.formatSeconds(durationSecs),
       viewCount: views,
+      playCount: 0,
       publishedAt: snippet['publishedAt'] != null
           ? DateTime.tryParse(snippet['publishedAt'] as String)
           : null,

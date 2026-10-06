@@ -20,6 +20,8 @@ class PlaylistProvider extends ChangeNotifier {
   List<Song> get recentlyPlayed => _recentlyPlayed;
   bool get isLoading => _isLoading;
 
+  bool isFavorite(String songId) => _favorites.any((s) => s.id == songId);
+
   Future<void> loadAll({bool silent = false}) async {
     if (!silent) {
       _isLoading = true;

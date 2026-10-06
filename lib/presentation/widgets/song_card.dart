@@ -85,6 +85,31 @@ class SongCard extends StatelessWidget {
                               color: Colors.white24),
                         ),
                 ),
+                if (song.playCount > 0)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(0xFFF97316).withValues(alpha: 0.5),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        '${song.playCount} plays',
+                        style: const TextStyle(
+                          color: Color(0xFFFB923C),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 if (isCurrent)
                   Positioned.fill(
                     child: Container(
