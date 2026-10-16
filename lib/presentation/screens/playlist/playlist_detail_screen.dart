@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../domain/entities/playlist.dart';
-import '../../../domain/entities/song.dart';
 import '../../providers/playlist_provider.dart';
 import '../../providers/player_provider.dart';
 import '../../widgets/song_card.dart';
@@ -110,10 +109,9 @@ class PlaylistDetailScreen extends StatelessWidget {
                       onPressed: currentPl.songs.isEmpty
                           ? null
                           : () {
-                              context.read<PlayerProvider>().playSong(
-                                    currentPl.songs.first,
-                                    newQueue: currentPl.songs,
-                                  );
+                              context
+                                  .read<PlayerProvider>()
+                                  .playPlaylist(currentPl.songs, shuffle: false);
                             },
                     ),
                   ),
@@ -135,12 +133,9 @@ class PlaylistDetailScreen extends StatelessWidget {
                       onPressed: currentPl.songs.isEmpty
                           ? null
                           : () {
-                              final shuffled = List<Song>.from(currentPl.songs)
-                                ..shuffle();
-                              context.read<PlayerProvider>().playSong(
-                                    shuffled.first,
-                                    newQueue: shuffled,
-                                  );
+                              context
+                                  .read<PlayerProvider>()
+                                  .playPlaylist(currentPl.songs, shuffle: true);
                             },
                     ),
                   ),

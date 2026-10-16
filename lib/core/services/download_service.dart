@@ -149,10 +149,11 @@ class DownloadService {
           final manifest = await _yt.videos.streamsClient.getManifest(
             cleanId,
             ytClients: [
-              YoutubeApiClient.android,
-              YoutubeApiClient.androidSdkless
+              YoutubeApiClient.tv,
+              YoutubeApiClient.mweb,
+              YoutubeApiClient.ios,
             ],
-          );
+          ).timeout(const Duration(seconds: 10));
           final audios = manifest.audioOnly.toList();
           if (audios.isNotEmpty) {
             final mp4s = audios

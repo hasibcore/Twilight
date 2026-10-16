@@ -218,6 +218,22 @@ class YouTubeAudioSource extends StreamAudioSource {
         } catch (e) {
           AppLogger.warning('Stream network drop at byte $currentPos: $e');
           retryAttempts++;
+          if (retryAttempts >= 2) {
+            final cleanId = _mediaItem.id.trim();
+            if (cleanId.isNotEmpty) {
+              AudioStreamExtractor.invalidateCache(cleanId);
+              try {
+                final fresh =
+                    await AudioStreamExtractor.extractAudioStream(cleanId);
+                if (fresh != null) {
+                  _streamUrl = fresh.url;
+                  _headers = fresh.headers;
+                  AppLogger.info(
+                      'Successfully refreshed expired/dropped stream URL for $cleanId');
+                }
+              } catch (_) {}
+            }
+          }
           await Future.delayed(Duration(milliseconds: 500 * retryAttempts));
         } finally {
           client?.close();

@@ -308,5 +308,29 @@ void main() {
       expect(player.queue.any((s) => s.id == songC.id), isTrue);
       expect(player.queue.length, equals(3));
     });
+
+    test('playPlaylist plays standard playlist in order with isShuffle = false',
+        () async {
+      await player.playPlaylist([songA, songB, songC], shuffle: false);
+      expect(player.isShuffle, isFalse);
+      expect(player.currentIndex, equals(0));
+      expect(player.currentSong?.id, equals('song_alpha_01'));
+      expect(player.queue.length, equals(3));
+    });
+
+    test('playPlaylist with shuffle sets isShuffle = true and enables restoring order',
+        () async {
+      await player.playPlaylist([songA, songB, songC, songD], shuffle: true);
+      expect(player.isShuffle, isTrue);
+      expect(player.queue.length, equals(4));
+
+      // Turning off shuffle should restore original sequential order
+      player.toggleShuffle();
+      expect(player.isShuffle, isFalse);
+      expect(player.queue[0].id, equals('song_alpha_01'));
+      expect(player.queue[1].id, equals('song_beta_02'));
+      expect(player.queue[2].id, equals('song_gamma_03'));
+      expect(player.queue[3].id, equals('song_delta_04'));
+    });
   });
 }

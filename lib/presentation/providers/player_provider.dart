@@ -14,6 +14,7 @@ import '../../core/services/youtube_audio_source.dart';
 import '../../core/services/audio_stream_extractor.dart';
 import '../../core/services/artwork_service.dart';
 import '../../core/services/music_import_service.dart';
+import '../../core/services/download_service.dart';
 import '../../core/services/local_storage_service.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
@@ -117,13 +118,15 @@ class PlayerProvider extends ChangeNotifier {
         }
 
         if (state.processingState == ProcessingState.completed) {
-          // If the track played for at least 15 seconds, or reached near duration end,
-          // treat it as naturally completed and transition to next song.
-          final bool isNaturalCompletion = _currentPosition.inSeconds >= 15 ||
-              (_totalDuration.inSeconds > 0 &&
-                  (_currentPosition.inSeconds >=
-                          (_totalDuration.inSeconds * 0.75).toInt() ||
-                      (_totalDuration - _currentPosition).inSeconds <= 20));
+          // A track has only naturally completed if current position reached >=95%
+          // or is within 3 seconds of the total duration.
+          // Any earlier completion is an interrupted/aborted network stream that must auto-recover!
+          final bool isNearEnd = _totalDuration.inSeconds > 0 &&
+              (_totalDuration - _currentPosition).inSeconds <= 3;
+          final bool isAtLeast95Percent = _totalDuration.inSeconds > 0 &&
+              _currentPosition.inSeconds >=
+                  (_totalDuration.inSeconds * 0.95).toInt();
+          final bool isNaturalCompletion = isNearEnd || isAtLeast95Percent;
 
           if (isNaturalCompletion) {
             onTrackEnded();
@@ -283,7 +286,9 @@ class PlayerProvider extends ChangeNotifier {
 
       int targetIndex = queueIndex ?? -1;
       if (newQueue != null && newQueue.isNotEmpty) {
-        _unshuffledQueue = null;
+        if (!_isShuffle) {
+          _unshuffledQueue = null;
+        }
         if (targetIndex < 0 || targetIndex >= newQueue.length) {
           targetIndex = newQueue.indexWhere((s) => s.id == song.id);
           if (targetIndex == -1) {
@@ -327,49 +332,69 @@ class PlayerProvider extends ChangeNotifier {
         cleanId = effectiveSong.id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '');
       }
 
-      if (effectiveSong.id.startsWith('sp_') ||
-          effectiveSong.channelId == 'spotify' ||
-          cleanId.length != 11) {
-        try {
-          final resolved =
-              await MusicImportService().resolveStreamTrack(effectiveSong);
-          if (resolved != null && !resolved.id.startsWith('sp_')) {
-            effectiveSong = resolved;
-            try {
-              cleanId = VideoId(effectiveSong.id.trim()).value;
-            } catch (_) {
-              cleanId =
-                  effectiveSong.id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '');
-            }
-          }
-        } catch (e) {
-          AppLogger.error('Failed to resolve track stream: $e');
+      // 1. OFFLINE-FIRST: If song is already downloaded locally, skip all remote resolution
+      final savedDownloads = DownloadService.loadSavedDownloads();
+      DownloadItem? localDownload;
+      for (final d in savedDownloads) {
+        if ((d.song.id == song.id ||
+                d.song.id == cleanId ||
+                d.song.title.toLowerCase().trim() ==
+                    song.title.toLowerCase().trim()) &&
+            File(d.localFilePath).existsSync()) {
+          localDownload = d;
+          break;
         }
       }
 
-      if (cleanId.length != 11 && !_isTest) {
-        try {
-          final searchRes = await _yt.search
-              .search('${effectiveSong.title} ${effectiveSong.artist}')
-              .timeout(const Duration(seconds: 4));
-          if (searchRes.isNotEmpty) {
-            cleanId = searchRes.first.id.value;
-          }
-        } catch (_) {}
-
-        if (cleanId.length != 11) {
-          final client = http.Client();
+      if (localDownload != null) {
+        effectiveSong = localDownload.song;
+        cleanId = effectiveSong.id;
+        AppLogger.info('Offline-first: Playing "${song.title}" from local download');
+      } else {
+        if (effectiveSong.id.startsWith('sp_') ||
+            effectiveSong.channelId == 'spotify' ||
+            cleanId.length != 11) {
           try {
-            final ytDatasource =
-                YouTubeRemoteDatasource(client: client, apiKey: '');
-            final searchResult = await ytDatasource
-                .searchAll('${effectiveSong.title} ${effectiveSong.artist}');
-            if (searchResult.songs.isNotEmpty) {
-              cleanId = searchResult.songs.first.id;
+            final resolved =
+                await MusicImportService().resolveStreamTrack(effectiveSong);
+            if (resolved != null && !resolved.id.startsWith('sp_')) {
+              effectiveSong = resolved;
+              try {
+                cleanId = VideoId(effectiveSong.id.trim()).value;
+              } catch (_) {
+                cleanId =
+                    effectiveSong.id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '');
+              }
             }
-          } catch (_) {
-          } finally {
-            client.close();
+          } catch (e) {
+            AppLogger.error('Failed to resolve track stream: $e');
+          }
+        }
+
+        if (cleanId.length != 11 && !_isTest) {
+          try {
+            final searchRes = await _yt.search
+                .search('${effectiveSong.title} ${effectiveSong.artist}')
+                .timeout(const Duration(seconds: 4));
+            if (searchRes.isNotEmpty) {
+              cleanId = searchRes.first.id.value;
+            }
+          } catch (_) {}
+
+          if (cleanId.length != 11) {
+            final client = http.Client();
+            try {
+              final ytDatasource =
+                  YouTubeRemoteDatasource(client: client, apiKey: '');
+              final searchResult = await ytDatasource
+                  .searchAll('${effectiveSong.title} ${effectiveSong.artist}');
+              if (searchResult.songs.isNotEmpty) {
+                cleanId = searchResult.songs.first.id;
+              }
+            } catch (_) {
+            } finally {
+              client.close();
+            }
           }
         }
       }
@@ -395,6 +420,15 @@ class PlayerProvider extends ChangeNotifier {
       if (_currentIndex >= 0 && _currentIndex < _queue.length) {
         _queue[_currentIndex] = targetSong;
       }
+      if (_unshuffledQueue != null) {
+        final uIdx = _unshuffledQueue!.indexWhere((s) =>
+            s.id == song.id ||
+            s.id == effectiveSong.id ||
+            s.title.toLowerCase().trim() == song.title.toLowerCase().trim());
+        if (uIdx != -1) {
+          _unshuffledQueue![uIdx] = targetSong;
+        }
+      }
       final fallbackSecs =
           targetSong.durationSeconds > 0 ? targetSong.durationSeconds : 210;
       _totalDuration = Duration(seconds: fallbackSecs);
@@ -416,8 +450,8 @@ class PlayerProvider extends ChangeNotifier {
 
       if (currentRequestId != _playRequestId) return;
 
-      // Start loading watchdog (25s safety net to clear spinner on slow networks)
-      _loadingWatchdog = Timer(const Duration(seconds: 25), () {
+      // Start loading watchdog (12s safety net to clear spinner on slow networks)
+      _loadingWatchdog = Timer(const Duration(seconds: 12), () {
         if (_isLoading && currentRequestId == _playRequestId) {
           _isLoading = false;
           _isResolvingSong = false;
@@ -492,7 +526,15 @@ class PlayerProvider extends ChangeNotifier {
       _isResolvingSong = false;
       _loadingWatchdog?.cancel();
       _errorSkipTimer?.cancel();
-      _errorSkipTimer = null;
+      // Resilient Auto-Skip: If playback failed on this track, give user 4s to retry,
+      // then advance to next track so music playback doesn't stall indefinitely
+      if (_queue.length > 1 || _isAutoplay) {
+        _errorSkipTimer = Timer(const Duration(seconds: 4), () {
+          if (!_isPlaying && _currentSong?.id == song.id) {
+            next();
+          }
+        });
+      }
       notifyListeners();
     }
   }
@@ -548,6 +590,22 @@ class PlayerProvider extends ChangeNotifier {
   void togglePlayPause() {
     if (_currentSong == null) return;
     if (_isResolvingSong) {
+      // If user pauses while track is resolving, cancel pending resolution immediately
+      _playRequestId++;
+      _isResolvingSong = false;
+      _isLoading = false;
+      _isPlaying = false;
+      _loadingWatchdog?.cancel();
+      _audioPlayer?.pause();
+      notifyListeners();
+      return;
+    }
+    // If player had an error or idle/completed stream, tapping play retries with stream refresh
+    if (!_isTest &&
+        (_errorMessage != null ||
+            _audioPlayer?.processingState == ProcessingState.idle ||
+            _audioPlayer?.processingState == ProcessingState.completed)) {
+      retryCurrentSong();
       return;
     }
     if (_isPlaying) {
@@ -559,6 +617,13 @@ class PlayerProvider extends ChangeNotifier {
 
   void play() {
     if (_currentSong == null) return;
+    if (!_isTest &&
+        (_errorMessage != null ||
+            _audioPlayer?.processingState == ProcessingState.idle ||
+            _audioPlayer?.processingState == ProcessingState.completed)) {
+      retryCurrentSong();
+      return;
+    }
     _errorMessage = null;
     _isPlaying = true;
     notifyListeners();
@@ -620,6 +685,22 @@ class PlayerProvider extends ChangeNotifier {
     }
   }
 
+  /// Plays a playlist from start or in shuffled order with consistent queue state
+  Future<void> playPlaylist(List<Song> songs, {bool shuffle = false}) async {
+    if (songs.isEmpty) return;
+    if (shuffle) {
+      final original = List<Song>.from(songs);
+      final shuffled = List<Song>.from(songs)..shuffle();
+      _isShuffle = true;
+      _unshuffledQueue = original;
+      await playSong(shuffled.first, newQueue: shuffled, queueIndex: 0);
+    } else {
+      _isShuffle = false;
+      _unshuffledQueue = null;
+      await playSong(songs.first, newQueue: songs, queueIndex: 0);
+    }
+  }
+
   Future<void> next() async {
     if (_queue.isEmpty) return;
     if (_currentIndex + 1 < _queue.length) {
@@ -654,7 +735,11 @@ class PlayerProvider extends ChangeNotifier {
               .toList();
 
           if (newTracks.isNotEmpty) {
-            _queue.addAll(newTracks.take(5));
+            final takeCount = newTracks.take(5).toList();
+            _queue.addAll(takeCount);
+            if (_unshuffledQueue != null) {
+              _unshuffledQueue!.addAll(takeCount);
+            }
             _currentIndex++;
             await playSong(_queue[_currentIndex], queueIndex: _currentIndex);
             return;
@@ -669,7 +754,11 @@ class PlayerProvider extends ChangeNotifier {
         final newTracks =
             suggestions.where((s) => !_queue.any((q) => q.id == s.id)).toList();
         if (newTracks.isNotEmpty) {
-          _queue.addAll(newTracks.take(5));
+          final takeCount = newTracks.take(5).toList();
+          _queue.addAll(takeCount);
+          if (_unshuffledQueue != null) {
+            _unshuffledQueue!.addAll(takeCount);
+          }
           _currentIndex++;
           await playSong(_queue[_currentIndex], queueIndex: _currentIndex);
           return;

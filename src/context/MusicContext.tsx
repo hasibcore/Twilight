@@ -34,8 +34,7 @@ interface MusicContextType {
   downloads: Song[];
   user: UserProfile;
   sleepTimerRemaining: number | null;
-  // Controls
-  playSong: (song: Song, newQueue?: Song[]) => void;
+  playSong: (song: Song, newQueue?: Song[], queueIndex?: number) => void;
   pauseSong: () => void;
   resumeSong: () => void;
   nextSong: () => void;
@@ -606,7 +605,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Play a song
-  const playSong = (song: Song, newQueue?: Song[]) => {
+  const playSong = (song: Song, newQueue?: Song[], queueIndex?: number) => {
     stopSyntheticMelody();
     // Update ref immediately so event handlers and async callbacks know current track
     currentSongRef.current = song;
@@ -624,11 +623,14 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (newQueue && newQueue.length > 0) {
       setQueue(newQueue);
       queueRef.current = newQueue;
-      let idx = newQueue.findIndex((s) => s.id === song.id);
-      if (idx === -1) {
-        idx = newQueue.findIndex((s) => s.title.toLowerCase().trim() === song.title.toLowerCase().trim());
+      let targetIdx = queueIndex !== undefined && queueIndex >= 0 && queueIndex < newQueue.length ? queueIndex : -1;
+      if (targetIdx === -1) {
+        let idx = newQueue.findIndex((s) => s.id === song.id);
+        if (idx === -1) {
+          idx = newQueue.findIndex((s) => s.title.toLowerCase().trim() === song.title.toLowerCase().trim());
+        }
+        targetIdx = idx !== -1 ? idx : 0;
       }
-      const targetIdx = idx !== -1 ? idx : 0;
       setCurrentIndex(targetIdx);
       currentIndexRef.current = targetIdx;
     } else {
@@ -771,13 +773,18 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       nextIdx = currentIdx + 1;
       if (nextIdx >= currentQ.length) {
+        if (!isRepeatRef.current) {
+          setIsPlaying(false);
+          setIsLoading(false);
+          return;
+        }
         nextIdx = 0;
       }
     }
 
     const next = currentQ[nextIdx] || currentQ[0];
     if (next) {
-      playSong(next, currentQ);
+      playSong(next, currentQ, nextIdx);
     }
   };
   handleNextSongRef.current = handleNextSong;
@@ -792,7 +799,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     const prev = currentQ[prevIdx] || currentQ[0];
     if (prev) {
-      playSong(prev, currentQ);
+      playSong(prev, currentQ, prevIdx);
     }
   };
 
