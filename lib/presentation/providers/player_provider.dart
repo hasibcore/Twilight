@@ -450,8 +450,8 @@ class PlayerProvider extends ChangeNotifier {
 
       if (currentRequestId != _playRequestId) return;
 
-      // Start loading watchdog (12s safety net to clear spinner on slow networks)
-      _loadingWatchdog = Timer(const Duration(seconds: 12), () {
+      // Start loading watchdog (22s safety net to clear spinner on slow mobile networks)
+      _loadingWatchdog = Timer(const Duration(seconds: 22), () {
         if (_isLoading && currentRequestId == _playRequestId) {
           _isLoading = false;
           _isResolvingSong = false;
@@ -474,32 +474,82 @@ class PlayerProvider extends ChangeNotifier {
       } catch (primaryErr) {
         if (currentRequestId != _playRequestId) return;
         AppLogger.warning(
-            'Primary audio source failed for "${targetSong.title}": $primaryErr. Trying resilient stream fallback...');
+            'Primary audio source failed for "${targetSong.title}" (${targetSong.id}): $primaryErr. Trying alternate search stream...');
 
-        final fallbackResult = await AudioStreamExtractor.extractAudioStream(
-          targetSong.id,
-          preferDownload: true,
-        );
+        bool fallbackSuccess = false;
 
-        if (fallbackResult != null && currentRequestId == _playRequestId) {
-          final fallbackArtUri = await ArtworkService.getArtworkUri(
-            thumbnailUrl: targetSong.thumbnailUrl,
-            songId: targetSong.id,
+        // Fallback 1: Extract direct audio stream from AudioStreamExtractor
+        try {
+          final fallbackResult = await AudioStreamExtractor.extractAudioStream(
+            targetSong.id,
+            preferDownload: true,
           );
 
-          final fallbackSource = AudioSource.uri(
-            Uri.parse(fallbackResult.url),
-            headers: fallbackResult.headers,
-            tag: MediaItem(
-              id: targetSong.id,
-              album: 'Twilight Music',
-              title: targetSong.title,
-              artist: targetSong.artist,
-              artUri: fallbackArtUri,
-            ),
-          );
-          await _audioPlayer!.setAudioSource(fallbackSource);
-        } else {
+          if (fallbackResult != null && currentRequestId == _playRequestId) {
+            final fallbackArtUri = await ArtworkService.getArtworkUri(
+              thumbnailUrl: targetSong.thumbnailUrl,
+              songId: targetSong.id,
+            );
+
+            final fallbackSource = AudioSource.uri(
+              Uri.parse(fallbackResult.url),
+              headers: fallbackResult.headers,
+              tag: MediaItem(
+                id: targetSong.id,
+                album: 'Twilight Music',
+                title: targetSong.title,
+                artist: targetSong.artist,
+                artUri: fallbackArtUri,
+              ),
+            );
+            await _audioPlayer!.setAudioSource(fallbackSource);
+            fallbackSuccess = true;
+          }
+        } catch (_) {}
+
+        // Fallback 2: Search for alternate audio version on YouTube if primary ID is restricted/unavailable
+        if (!fallbackSuccess && currentRequestId == _playRequestId) {
+          try {
+            final searchRes = await _yt.search
+                .search('${targetSong.title} ${targetSong.artist} audio')
+                .timeout(const Duration(seconds: 4));
+            final altVideo = searchRes.firstWhere(
+              (v) => v.id.value != targetSong.id,
+              orElse: () => searchRes.first,
+            );
+
+            if (altVideo.id.value != targetSong.id) {
+              AppLogger.info(
+                  'Found alternate audio track ${altVideo.id.value} for "${targetSong.title}"');
+              final altSong = Song(
+                id: altVideo.id.value,
+                title: targetSong.title,
+                artist: targetSong.artist,
+                channelId: altVideo.channelId.value,
+                thumbnailUrl: targetSong.thumbnailUrl.isNotEmpty
+                    ? targetSong.thumbnailUrl
+                    : altVideo.thumbnails.highResUrl,
+                durationSeconds:
+                    altVideo.duration?.inSeconds ?? targetSong.durationSeconds,
+                durationFormatted: targetSong.durationFormatted,
+                viewCount: targetSong.viewCount,
+                publishedAt: targetSong.publishedAt,
+                isFavorite: targetSong.isFavorite,
+              );
+
+              final altSource = await YouTubeAudioSource.resolveAudioSource(
+                song: altSong,
+                yt: _yt,
+              );
+
+              if (currentRequestId != _playRequestId) return;
+              await _audioPlayer!.setAudioSource(altSource);
+              fallbackSuccess = true;
+            }
+          } catch (_) {}
+        }
+
+        if (!fallbackSuccess) {
           rethrow;
         }
       }
@@ -526,10 +576,10 @@ class PlayerProvider extends ChangeNotifier {
       _isResolvingSong = false;
       _loadingWatchdog?.cancel();
       _errorSkipTimer?.cancel();
-      // Resilient Auto-Skip: If playback failed on this track, give user 4s to retry,
+      // Resilient Auto-Skip: If playback failed on this track, give user 6s to retry,
       // then advance to next track so music playback doesn't stall indefinitely
       if (_queue.length > 1 || _isAutoplay) {
-        _errorSkipTimer = Timer(const Duration(seconds: 4), () {
+        _errorSkipTimer = Timer(const Duration(seconds: 6), () {
           if (!_isPlaying && _currentSong?.id == song.id) {
             next();
           }

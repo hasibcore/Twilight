@@ -136,16 +136,11 @@ class AudioStreamExtractor {
       }
     }
 
-    // Tier 1: YoutubeExplode with TV / MWEB / iOS clients (Deciphered official streams)
+    // Tier 1: Direct YoutubeExplode manifest (fast official deciphered streams)
     try {
-      final manifest = await _yt.videos.streamsClient.getManifest(
-        videoId,
-        ytClients: [
-          YoutubeApiClient.tv,
-          YoutubeApiClient.mweb,
-          YoutubeApiClient.ios
-        ],
-      ).timeout(const Duration(seconds: 8));
+      final manifest = await _yt.videos.streamsClient
+          .getManifest(videoId)
+          .timeout(const Duration(seconds: 6));
       final audioStreams = manifest.audioOnly;
       if (audioStreams.isNotEmpty) {
         final m4a = audioStreams
@@ -168,6 +163,7 @@ class AudioStreamExtractor {
           headers: const {
             'User-Agent':
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': '*/*',
           },
           isDirectDownloadable: true,
         );
@@ -175,7 +171,7 @@ class AudioStreamExtractor {
         return result;
       }
     } catch (e) {
-      AppLogger.info('Tier 1 YoutubeExplode error for $videoId: $e');
+      AppLogger.info('Tier 1 YoutubeExplode default error for $videoId: $e');
     }
 
     // Tier 2: Invidious / Piped Instances (Fast unthrottled streaming)

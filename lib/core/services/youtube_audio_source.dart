@@ -146,8 +146,8 @@ class YouTubeAudioSource extends StreamAudioSource {
           } else {
             request.headers['User-Agent'] =
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
-            request.headers['Accept'] = '*/*';
           }
+          request.headers['Accept'] = '*/*';
 
           // YouTube throttles/rejects range requests larger than ~450KB with HTTP 403.
           // Chunking into safe 256KB blocks prevents HTTP 403 and enables smooth progressive streaming.

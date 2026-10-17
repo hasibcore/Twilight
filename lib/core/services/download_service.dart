@@ -146,14 +146,20 @@ class DownloadService {
         bool downloadSuccess = false;
 
         try {
-          final manifest = await _yt.videos.streamsClient.getManifest(
-            cleanId,
-            ytClients: [
-              YoutubeApiClient.tv,
-              YoutubeApiClient.mweb,
-              YoutubeApiClient.ios,
-            ],
-          ).timeout(const Duration(seconds: 10));
+          StreamManifest manifest;
+          try {
+            manifest = await _yt.videos.streamsClient
+                .getManifest(cleanId)
+                .timeout(const Duration(seconds: 8));
+          } catch (_) {
+            manifest = await _yt.videos.streamsClient.getManifest(
+              cleanId,
+              ytClients: [
+                YoutubeApiClient.androidSdkless,
+                YoutubeApiClient.ios,
+              ],
+            ).timeout(const Duration(seconds: 8));
+          }
           final audios = manifest.audioOnly.toList();
           if (audios.isNotEmpty) {
             final mp4s = audios
