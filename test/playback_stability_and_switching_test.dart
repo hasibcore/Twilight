@@ -1,8 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:melody_tube/core/services/download_service.dart';
+import 'package:melody_tube/core/services/local_storage_service.dart';
 import 'package:melody_tube/domain/entities/song.dart';
 import 'package:melody_tube/domain/entities/playlist.dart';
 import 'package:melody_tube/domain/repositories/music_repository.dart';
 import 'package:melody_tube/presentation/providers/player_provider.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MockMusicRepository implements MusicRepository {
   final List<Song> recentlyPlayed = [];
@@ -78,6 +85,20 @@ class MockMusicRepository implements MusicRepository {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  setUpAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'getTemporaryDirectory' ||
+            methodCall.method == 'getApplicationDocumentsDirectory') {
+          return Directory.systemTemp.path;
+        }
+        return null;
+      },
+    );
+  });
+
   late MockMusicRepository mockMusicRepo;
   late PlayerProvider player;
 
@@ -124,6 +145,64 @@ void main() {
   setUp(() {
     mockMusicRepo = MockMusicRepository();
     player = PlayerProvider(musicRepository: mockMusicRepo);
+  });
+
+  group('Offline downloads & track identity', () {
+    test('offline-first playback prefers the exact downloaded track ID over same-title collisions', () async {
+      SharedPreferences.setMockInitialValues({});
+      await LocalStorageService.init();
+
+      final tempDir = await getTemporaryDirectory();
+      final correctFile = File('${tempDir.path}/correct_track.m4a');
+      final wrongFile = File('${tempDir.path}/wrong_track.m4a');
+      await correctFile.writeAsString('audio-data');
+      await wrongFile.writeAsString('audio-data');
+
+      final correctSong = const Song(
+        id: 'abc123defgh',
+        title: 'Collision Title',
+        artist: 'Artist A',
+        channelId: 'ch_ok',
+        thumbnailUrl: '',
+        durationSeconds: 200,
+        durationFormatted: '03:20',
+      );
+      final wrongSong = const Song(
+        id: 'xyz987mnop',
+        title: 'Collision Title',
+        artist: 'Artist B',
+        channelId: 'ch_wrong',
+        thumbnailUrl: '',
+        durationSeconds: 200,
+        durationFormatted: '03:20',
+      );
+
+      final items = [
+        DownloadItem(
+          song: wrongSong,
+          localFilePath: wrongFile.path,
+          downloadedAtMillis: DateTime.now().millisecondsSinceEpoch,
+          fileSize: 10,
+        ),
+        DownloadItem(
+          song: correctSong,
+          localFilePath: correctFile.path,
+          downloadedAtMillis: DateTime.now().millisecondsSinceEpoch,
+          fileSize: 10,
+        ),
+      ];
+
+      await LocalStorageService.setStringList(
+        'twilight_downloaded_tracks',
+        items.map((item) => jsonEncode(item.toJson())).toList(),
+      );
+
+      final offlinePlayer = PlayerProvider(musicRepository: mockMusicRepo);
+      await offlinePlayer.playSong(correctSong, newQueue: [correctSong]);
+
+      expect(offlinePlayer.currentSong?.id, equals('abc123defgh'));
+      expect(offlinePlayer.currentSong?.title, equals('Collision Title'));
+    });
   });
 
   group('Phase 2 — Song Switching & Instant UI Synchronization', () {

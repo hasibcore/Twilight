@@ -17,15 +17,50 @@ class DownloadProvider extends ChangeNotifier {
   int get count => _downloads.length;
   String? get lastError => _lastError;
 
+  String _normalizeTrackId(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return '';
+
+    final uri = Uri.tryParse(trimmed);
+    String candidate = trimmed;
+    if (uri != null && uri.isAbsolute) {
+      if (uri.queryParameters.containsKey('v')) {
+        candidate = uri.queryParameters['v'] ?? candidate;
+      } else {
+        final segments = uri.pathSegments.where((s) => s.trim().isNotEmpty).toList();
+        if (segments.isNotEmpty) {
+          candidate = segments.last;
+        }
+      }
+    }
+
+    candidate = candidate.split(RegExp(r'[\\/]+')).last;
+    candidate = candidate.split('.').first;
+    candidate = candidate.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '');
+    return candidate;
+  }
+
+  bool _matchesDownloadId(DownloadItem item, String id) {
+    final normalizedId = _normalizeTrackId(id);
+    if (normalizedId.isEmpty) return false;
+
+    final itemId = _normalizeTrackId(item.song.id);
+    final fileId = _normalizeTrackId(item.localFilePath);
+    return itemId == normalizedId || fileId == normalizedId;
+  }
+
   bool _pathContainsId(String path, String id) {
     if (path.isEmpty || id.isEmpty) return false;
-    final segments = path.split(RegExp(r'[\\\/]+'));
-    final fileName = segments.isNotEmpty ? segments.last : path;
-    return fileName.startsWith(id) || fileName.contains(id);
+    final normalizedPathId = _normalizeTrackId(path);
+    final normalizedId = _normalizeTrackId(id);
+    return normalizedId.isNotEmpty && normalizedPathId.contains(normalizedId);
   }
 
   bool isDownloaded(String songId) {
-    return _downloads.any((d) => d.song.id == songId || _pathContainsId(d.localFilePath, songId));
+    return _downloads.any((d) =>
+        d.song.id == songId ||
+        _matchesDownloadId(d, songId) ||
+        _pathContainsId(d.localFilePath, songId));
   }
 
   bool isDownloading(String songId) {
@@ -38,7 +73,10 @@ class DownloadProvider extends ChangeNotifier {
 
   DownloadItem? getDownloadItem(String songId) {
     try {
-      return _downloads.firstWhere((d) => d.song.id == songId || _pathContainsId(d.localFilePath, songId));
+      return _downloads.firstWhere((d) =>
+          d.song.id == songId ||
+          _matchesDownloadId(d, songId) ||
+          _pathContainsId(d.localFilePath, songId));
     } catch (_) {
       return null;
     }

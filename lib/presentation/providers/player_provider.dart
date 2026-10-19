@@ -252,6 +252,46 @@ class PlayerProvider extends ChangeNotifier {
     return [];
   }
 
+  String _normalizeTrackKey(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return '';
+
+    final uri = Uri.tryParse(trimmed);
+    String candidate = trimmed;
+    if (uri != null && uri.isAbsolute) {
+      if (uri.queryParameters.containsKey('v')) {
+        candidate = uri.queryParameters['v'] ?? candidate;
+      } else {
+        final segments = uri.pathSegments.where((s) => s.trim().isNotEmpty).toList();
+        if (segments.isNotEmpty) {
+          candidate = segments.last;
+        }
+      }
+    }
+
+    candidate = candidate.split(RegExp(r'[\\/]+')).last;
+    candidate = candidate.split('.').first;
+    candidate = candidate.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '');
+    return candidate;
+  }
+
+  bool _matchesDownloadedTrack(Song song, DownloadItem download) {
+    final songKey = _normalizeTrackKey(song.id);
+    final downloadKey = _normalizeTrackKey(download.song.id);
+    final fileKey = _normalizeTrackKey(download.localFilePath);
+
+    if (songKey.isNotEmpty && (songKey == downloadKey || songKey == fileKey)) {
+      return true;
+    }
+
+    if (songKey.isEmpty && downloadKey.isEmpty &&
+        song.title.trim().toLowerCase() == download.song.title.trim().toLowerCase()) {
+      return true;
+    }
+
+    return false;
+  }
+
   Future<void> playSong(Song song,
       {List<Song>? newQueue, int? queueIndex}) async {
     final currentRequestId = ++_playRequestId;
@@ -336,11 +376,7 @@ class PlayerProvider extends ChangeNotifier {
       final savedDownloads = DownloadService.loadSavedDownloads();
       DownloadItem? localDownload;
       for (final d in savedDownloads) {
-        if ((d.song.id == song.id ||
-                d.song.id == cleanId ||
-                d.song.title.toLowerCase().trim() ==
-                    song.title.toLowerCase().trim()) &&
-            File(d.localFilePath).existsSync()) {
+        if (_matchesDownloadedTrack(song, d) && File(d.localFilePath).existsSync()) {
           localDownload = d;
           break;
         }
