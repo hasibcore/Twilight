@@ -196,6 +196,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   currentIndexRef.current = currentIndex;
   const handleNextSongRef = useRef<() => void>(() => {});
   const loadingWatchdogRef = useRef<any>(null);
+  const playRequestIdRef = useRef<number>(0);
 
   // Initialize YouTube IFrame Player
   useEffect(() => {
@@ -254,6 +255,17 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               }
             },
             onStateChange: (event: any) => {
+              const activeSong = currentSongRef.current;
+              const activeIsYT =
+                !!activeSong && isYouTubeId(activeSong.id) && !activeSong.audioUrl;
+              if (!activeIsYT) return;
+              try {
+                const activeVideoId = event.target?.getVideoData?.()?.video_id;
+                if (activeVideoId && activeSong && activeVideoId !== activeSong.id) {
+                  return;
+                }
+              } catch {}
+
               if (event.data === 1) {
                 setIsPlaying(true);
                 setIsLoading(false);
@@ -282,12 +294,16 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             },
             onError: async (event: any) => {
               console.warn('YouTube playback error:', event.data);
+              const active = currentSongRef.current;
+              const activeIsYT =
+                !!active && isYouTubeId(active.id) && !active.audioUrl;
+              if (!activeIsYT) return;
+
               setIsLoading(false);
               if (loadingWatchdogRef.current) {
                 clearTimeout(loadingWatchdogRef.current);
                 loadingWatchdogRef.current = null;
               }
-              const active = currentSongRef.current;
               if (active) {
                 let alternateFound = false;
                 if (event.data === 150 || event.data === 101 || event.data === 100) {
@@ -606,7 +622,31 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Play a song
   const playSong = (song: Song, newQueue?: Song[], queueIndex?: number) => {
+    const requestId = ++playRequestIdRef.current;
+    const isLatestRequest = () => playRequestIdRef.current === requestId;
+
     stopSyntheticMelody();
+    pendingSongRef.current = null;
+
+    // Stop any currently active media path before switching tracks.
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.src = '';
+    }
+    if (
+      ytPlayerRef.current &&
+      ytReadyRef.current &&
+      typeof ytPlayerRef.current.pauseVideo === 'function'
+    ) {
+      try {
+        ytPlayerRef.current.pauseVideo();
+        if (typeof ytPlayerRef.current.stopVideo === 'function') {
+          ytPlayerRef.current.stopVideo();
+        }
+      } catch {}
+    }
+
     // Update ref immediately so event handlers and async callbacks know current track
     currentSongRef.current = song;
     setCurrentSong(song);
@@ -668,10 +708,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const isYT = isYouTubeId(song.id) && !song.audioUrl;
 
     if (isYT) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-      }
       setDuration(song.durationSeconds || 210);
       setCurrentTime(0);
 
@@ -681,10 +717,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             videoId: song.id,
             startSeconds: 0,
           });
+          if (!isLatestRequest()) return;
           ytPlayerRef.current.playVideo();
         } catch (e) {
           console.warn('YT play failed, attempting direct stream:', e);
-          if (audioRef.current) {
+          if (audioRef.current && isLatestRequest()) {
             audioRef.current.src = `/api/stream/${encodeURIComponent(song.id)}`;
             audioRef.current.play().catch(() => playSyntheticMelody());
           }
@@ -693,12 +730,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         pendingSongRef.current = song;
       }
     } else {
-      if (ytPlayerRef.current && ytReadyRef.current && typeof ytPlayerRef.current.pauseVideo === 'function') {
-        try {
-          ytPlayerRef.current.pauseVideo();
-        } catch {}
-      }
-
       if (audioRef.current) {
         const audioUrl = song.audioUrl || `/api/stream/${encodeURIComponent(song.id)}`;
         audioRef.current.src = audioUrl;
@@ -708,10 +739,12 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         audioRef.current
           .play()
           .then(() => {
+            if (!isLatestRequest()) return;
             setIsPlaying(true);
             setIsLoading(false);
           })
           .catch((err) => {
+            if (!isLatestRequest()) return;
             console.warn('Audio play initiated fallback:', err);
             setIsLoading(false);
             playSyntheticMelody();
