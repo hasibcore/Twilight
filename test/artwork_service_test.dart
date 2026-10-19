@@ -35,7 +35,14 @@ void main() {
         thumbnailUrl: '',
         songId: 'empty_song',
       );
-      // In test environment without assets bundle, it safely returns null or logo URI
+      expect(uri == null || uri.toString().isNotEmpty, isTrue);
+    });
+
+    test('getArtworkUri falls back to app logo when thumbnail is invalid', () async {
+      final uri = await ArtworkService.getArtworkUri(
+        thumbnailUrl: 'not-a-valid-url',
+        songId: 'fallback_song',
+      );
       expect(uri == null || uri.toString().isNotEmpty, isTrue);
     });
   });

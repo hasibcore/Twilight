@@ -39,6 +39,24 @@ class ArtworkService {
     }
   }
 
+  static Uri? _parseValidRemoteUri(String? thumbnailUrl) {
+    if (thumbnailUrl == null || thumbnailUrl.trim().isEmpty) {
+      return null;
+    }
+
+    final cleanUrl = thumbnailUrl.trim();
+    final parsed = Uri.tryParse(cleanUrl);
+    if (parsed == null) {
+      return null;
+    }
+
+    if (parsed.scheme != 'http' && parsed.scheme != 'https') {
+      return null;
+    }
+
+    return parsed;
+  }
+
   /// Returns a valid Uri for MediaItem artUri:
   /// 1. If song thumbnail is cached locally -> Uri.file(localCachedFile)
   /// 2. If song thumbnail is a valid HTTP URL -> Uri.parse(thumbnailUrl)
@@ -48,10 +66,7 @@ class ArtworkService {
     String? songId,
   }) async {
     if (kIsWeb) {
-      if (thumbnailUrl != null && thumbnailUrl.startsWith('http')) {
-        return Uri.tryParse(thumbnailUrl);
-      }
-      return null;
+      return _parseValidRemoteUri(thumbnailUrl);
     }
 
     final logoPath = await getAppLogoFilePath();
@@ -59,15 +74,23 @@ class ArtworkService {
         ? Uri.file(logoPath)
         : null;
 
-    if (thumbnailUrl == null ||
-        thumbnailUrl.trim().isEmpty ||
-        !thumbnailUrl.startsWith('http')) {
-      return cleanLogoUri;
+    final remoteUri = _parseValidRemoteUri(thumbnailUrl);
+    if (remoteUri != null) {
+      if (songId != null && songId.isNotEmpty) {
+        try {
+          final tempDir = await getTemporaryDirectory();
+          final cachedThumb = File('${tempDir.path}/thumb_$songId.jpg');
+          if (cachedThumb.existsSync() && cachedThumb.lengthSync() > 1000) {
+            return Uri.file(cachedThumb.path);
+          }
+
+          _cacheThumbnailInBackground(remoteUri.toString(), cachedThumb);
+        } catch (_) {}
+      }
+      return remoteUri;
     }
 
-    final cleanUrl = thumbnailUrl.trim();
-
-    // Check if we have a locally cached thumbnail for this song
+    // Only use the app logo if there is no valid remote/local thumbnail.
     if (songId != null && songId.isNotEmpty) {
       try {
         final tempDir = await getTemporaryDirectory();
@@ -75,14 +98,10 @@ class ArtworkService {
         if (cachedThumb.existsSync() && cachedThumb.lengthSync() > 1000) {
           return Uri.file(cachedThumb.path);
         }
-
-        // Asynchronously download and cache thumbnail for instant future plays
-        _cacheThumbnailInBackground(cleanUrl, cachedThumb);
       } catch (_) {}
     }
 
-    final parsed = Uri.tryParse(cleanUrl);
-    return parsed ?? cleanLogoUri;
+    return cleanLogoUri;
   }
 
   static void _cacheThumbnailInBackground(String url, File targetFile) {
