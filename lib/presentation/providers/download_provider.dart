@@ -17,9 +17,15 @@ class DownloadProvider extends ChangeNotifier {
   int get count => _downloads.length;
   String? get lastError => _lastError;
 
+  bool _pathContainsId(String path, String id) {
+    if (path.isEmpty || id.isEmpty) return false;
+    final segments = path.split(RegExp(r'[\\\/]+'));
+    final fileName = segments.isNotEmpty ? segments.last : path;
+    return fileName.startsWith(id) || fileName.contains(id);
+  }
+
   bool isDownloaded(String songId) {
-    return _downloads
-        .any((d) => d.song.id == songId || d.localFilePath.contains(songId));
+    return _downloads.any((d) => d.song.id == songId || _pathContainsId(d.localFilePath, songId));
   }
 
   bool isDownloading(String songId) {
@@ -32,8 +38,7 @@ class DownloadProvider extends ChangeNotifier {
 
   DownloadItem? getDownloadItem(String songId) {
     try {
-      return _downloads.firstWhere(
-          (d) => d.song.id == songId || d.localFilePath.contains(songId));
+      return _downloads.firstWhere((d) => d.song.id == songId || _pathContainsId(d.localFilePath, songId));
     } catch (_) {
       return null;
     }
