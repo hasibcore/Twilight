@@ -116,7 +116,6 @@ class YouTubeAudioSource extends StreamAudioSource {
     int retryAttempts = 0;
     const maxRetries = 10;
 
-    // Open progressive cache sink if streaming from byte 0
     IOSink? cacheSink;
     File? partFile;
     if (start == 0 && _cacheFile != null) {
@@ -140,6 +139,15 @@ class YouTubeAudioSource extends StreamAudioSource {
           final url = _streamUrl ?? (_streamInfo?.url.toString() ?? '');
           if (url.isEmpty) break;
 
+          final adaptiveChunkSize = retryAttempts >= 3
+              ? 64 * 1024
+              : retryAttempts >= 1
+                  ? 128 * 1024
+                  : 256 * 1024;
+          final requestTimeout = retryAttempts >= 2
+              ? const Duration(seconds: 18)
+              : const Duration(seconds: 25);
+
           final request = http.Request('GET', Uri.parse(url));
           if (_headers != null && _headers!.isNotEmpty) {
             request.headers.addAll(_headers!);
@@ -149,25 +157,23 @@ class YouTubeAudioSource extends StreamAudioSource {
           }
           request.headers['Accept'] = '*/*';
 
-          // YouTube throttles/rejects range requests larger than ~450KB with HTTP 403.
-          // Chunking into safe 256KB blocks prevents HTTP 403 and enables smooth progressive streaming.
-          const int maxChunkSize = 256 * 1024;
           final nextTarget = (targetEnd != null)
-              ? (currentPos + maxChunkSize < targetEnd
-                  ? currentPos + maxChunkSize
+              ? (currentPos + adaptiveChunkSize < targetEnd
+                  ? currentPos + adaptiveChunkSize
                   : targetEnd)
-              : (currentPos + maxChunkSize);
+              : (currentPos + adaptiveChunkSize);
           final rangeEnd = (nextTarget > currentPos) ? (nextTarget - 1) : currentPos;
           request.headers['Range'] = 'bytes=$currentPos-$rangeEnd';
 
-          final response =
-              await client.send(request).timeout(const Duration(seconds: 25));
+          final response = await client.send(request).timeout(requestTimeout);
 
           if (response.statusCode == 200 || response.statusCode == 206) {
-            retryAttempts = 0; // reset retry counter on successful connection
+            retryAttempts = 0;
             int bytesReceivedInChunk = 0;
-            await for (final chunk
-                in response.stream.timeout(const Duration(seconds: 40))) {
+            final streamTimeout = retryAttempts >= 2
+                ? const Duration(seconds: 20)
+                : const Duration(seconds: 40);
+            await for (final chunk in response.stream.timeout(streamTimeout)) {
               if (chunk.isNotEmpty) {
                 currentPos += chunk.length;
                 bytesReceivedInChunk += chunk.length;
@@ -178,23 +184,20 @@ class YouTubeAudioSource extends StreamAudioSource {
               }
             }
 
-            // If we reached targetEnd, we are done
             if (targetEnd != null && currentPos >= targetEnd) {
               break;
             }
             if (bytesReceivedInChunk == 0) {
               retryAttempts++;
-              await Future.delayed(Duration(milliseconds: 200 * retryAttempts));
+              await Future.delayed(Duration(milliseconds: 180 * retryAttempts));
             }
           } else if (response.statusCode == 403 || response.statusCode == 410) {
-            // Stream URL expired or rate limited. Refresh it!
             AppLogger.warning(
                 'Stream URL status ${response.statusCode} at $currentPos. Refreshing stream...');
             final cleanId = _mediaItem.id.trim();
             if (cleanId.isNotEmpty) {
               AudioStreamExtractor.invalidateCache(cleanId);
-              final fresh =
-                  await AudioStreamExtractor.extractAudioStream(cleanId);
+              final fresh = await AudioStreamExtractor.extractAudioStream(cleanId);
               if (fresh != null) {
                 _streamUrl = fresh.url;
                 _headers = fresh.headers;
@@ -203,17 +206,15 @@ class YouTubeAudioSource extends StreamAudioSource {
               }
             }
             retryAttempts++;
-            await Future.delayed(Duration(milliseconds: 300 * retryAttempts));
+            await Future.delayed(Duration(milliseconds: 250 * retryAttempts));
           } else if (response.statusCode == 416) {
-            // Reached end of stream (range not satisfiable = file completely delivered)
-            AppLogger.info(
-                'Reached end of stream (HTTP 416) at byte $currentPos');
+            AppLogger.info('Reached end of stream (HTTP 416) at byte $currentPos');
             break;
           } else {
             AppLogger.warning(
                 'Stream HTTP status ${response.statusCode} at byte $currentPos');
             retryAttempts++;
-            await Future.delayed(Duration(milliseconds: 400 * retryAttempts));
+            await Future.delayed(Duration(milliseconds: 350 * retryAttempts));
           }
         } catch (e) {
           AppLogger.warning('Stream network drop at byte $currentPos: $e');
@@ -223,8 +224,7 @@ class YouTubeAudioSource extends StreamAudioSource {
             if (cleanId.isNotEmpty) {
               AudioStreamExtractor.invalidateCache(cleanId);
               try {
-                final fresh =
-                    await AudioStreamExtractor.extractAudioStream(cleanId);
+                final fresh = await AudioStreamExtractor.extractAudioStream(cleanId);
                 if (fresh != null) {
                   _streamUrl = fresh.url;
                   _headers = fresh.headers;
@@ -234,7 +234,7 @@ class YouTubeAudioSource extends StreamAudioSource {
               } catch (_) {}
             }
           }
-          await Future.delayed(Duration(milliseconds: 500 * retryAttempts));
+          await Future.delayed(Duration(milliseconds: 400 * retryAttempts));
         } finally {
           client?.close();
         }
@@ -246,7 +246,6 @@ class YouTubeAudioSource extends StreamAudioSource {
           await cacheSink.close();
         } catch (_) {}
 
-        // Promote to verified progressive cache if complete
         if (partFile != null && partFile.existsSync()) {
           final minExpected =
               _totalBytes > 0 ? (_totalBytes * 0.90).toInt() : 400000;
@@ -262,7 +261,6 @@ class YouTubeAudioSource extends StreamAudioSource {
               AppLogger.warning('Failed to promote cache file: $e');
             }
           } else {
-            // Remove incomplete partial download so it does not waste disk space
             try {
               partFile.deleteSync();
             } catch (_) {}
