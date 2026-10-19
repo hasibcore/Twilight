@@ -332,5 +332,52 @@ void main() {
       expect(player.queue[2].id, equals('song_gamma_03'));
       expect(player.queue[3].id, equals('song_delta_04'));
     });
+
+    test('10-song continuous playback flow remains stable across mixed controls',
+        () async {
+      final songs = List.generate(
+        10,
+        (i) => Song(
+          id: 'song_long_${i + 1}',
+          title: 'Long Play ${i + 1}',
+          artist: 'Artist ${i + 1}',
+          channelId: 'ch_${i + 1}',
+          thumbnailUrl: 'https://example.com/${i + 1}.jpg',
+          durationSeconds: 180 + i,
+          durationFormatted: '03:00',
+        ),
+      );
+
+      await player.playSong(songs.first, newQueue: songs);
+      expect(player.currentIndex, equals(0));
+
+      // Move through queue with a mixed strategy:
+      // next(), onTrackEnded(), and direct playSong jumps.
+      await player.next(); // -> 1
+      expect(player.currentIndex, equals(1));
+
+      await player.onTrackEnded(); // -> 2
+      expect(player.currentIndex, equals(2));
+
+      await player.playSong(songs[4], newQueue: songs, queueIndex: 4); // jump -> 4
+      expect(player.currentIndex, equals(4));
+      expect(player.currentSong?.id, equals('song_long_5'));
+
+      await player.onTrackEnded(); // -> 5
+      expect(player.currentIndex, equals(5));
+
+      await player.next(); // -> 6
+      expect(player.currentIndex, equals(6));
+
+      await player.playSong(songs[8], newQueue: songs, queueIndex: 8); // jump -> 8
+      expect(player.currentIndex, equals(8));
+      expect(player.currentSong?.id, equals('song_long_9'));
+
+      await player.onTrackEnded(); // -> 9
+      expect(player.currentIndex, equals(9));
+      expect(player.currentSong?.id, equals('song_long_10'));
+      expect(player.isPlaying, isTrue);
+      expect(player.errorMessage, isNull);
+    });
   });
 }

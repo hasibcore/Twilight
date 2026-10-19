@@ -45,8 +45,9 @@ class YouTubeAudioSource extends StreamAudioSource {
         _totalBytes = streamInfo.size.totalBytes > 0
             ? streamInfo.size.totalBytes
             : ((mediaItem.duration != null && mediaItem.duration!.inSeconds > 0)
-                ? (mediaItem.duration!.inSeconds * 32000)
-                : 15000000),
+                // Use a conservative upper estimate so unknown-size streams never end early.
+                ? (mediaItem.duration!.inSeconds * 96000)
+                : 30000000),
         _mimeType = streamInfo.container.name,
         _cacheFile = cacheFile,
         _mediaItem = mediaItem,
@@ -65,8 +66,9 @@ class YouTubeAudioSource extends StreamAudioSource {
         _totalBytes = totalBytes > 0
             ? totalBytes
             : ((mediaItem.duration != null && mediaItem.duration!.inSeconds > 0)
-                ? (mediaItem.duration!.inSeconds * 32000)
-                : 15000000),
+                // Use a conservative upper estimate so unknown-size streams never end early.
+                ? (mediaItem.duration!.inSeconds * 96000)
+                : 30000000),
         _mimeType = mimeType,
         _cacheFile = cacheFile,
         _mediaItem = mediaItem,
@@ -114,7 +116,7 @@ class YouTubeAudioSource extends StreamAudioSource {
     int currentPos = start;
     final targetEnd = end;
     int retryAttempts = 0;
-    const maxRetries = 10;
+    const maxRetries = 20;
 
     IOSink? cacheSink;
     File? partFile;
@@ -162,15 +164,17 @@ class YouTubeAudioSource extends StreamAudioSource {
                   ? currentPos + adaptiveChunkSize
                   : targetEnd)
               : (currentPos + adaptiveChunkSize);
-          final rangeEnd = (nextTarget > currentPos) ? (nextTarget - 1) : currentPos;
+          final rangeEnd =
+              (nextTarget > currentPos) ? (nextTarget - 1) : currentPos;
           request.headers['Range'] = 'bytes=$currentPos-$rangeEnd';
 
           final response = await client.send(request).timeout(requestTimeout);
 
           if (response.statusCode == 200 || response.statusCode == 206) {
+            final hadRetries = retryAttempts > 0;
             retryAttempts = 0;
             int bytesReceivedInChunk = 0;
-            final streamTimeout = retryAttempts >= 2
+            final streamTimeout = hadRetries
                 ? const Duration(seconds: 20)
                 : const Duration(seconds: 40);
             await for (final chunk in response.stream.timeout(streamTimeout)) {
@@ -197,7 +201,8 @@ class YouTubeAudioSource extends StreamAudioSource {
             final cleanId = _mediaItem.id.trim();
             if (cleanId.isNotEmpty) {
               AudioStreamExtractor.invalidateCache(cleanId);
-              final fresh = await AudioStreamExtractor.extractAudioStream(cleanId);
+              final fresh =
+                  await AudioStreamExtractor.extractAudioStream(cleanId);
               if (fresh != null) {
                 _streamUrl = fresh.url;
                 _headers = fresh.headers;
@@ -208,7 +213,8 @@ class YouTubeAudioSource extends StreamAudioSource {
             retryAttempts++;
             await Future.delayed(Duration(milliseconds: 250 * retryAttempts));
           } else if (response.statusCode == 416) {
-            AppLogger.info('Reached end of stream (HTTP 416) at byte $currentPos');
+            AppLogger.info(
+                'Reached end of stream (HTTP 416) at byte $currentPos');
             break;
           } else {
             AppLogger.warning(
@@ -224,7 +230,8 @@ class YouTubeAudioSource extends StreamAudioSource {
             if (cleanId.isNotEmpty) {
               AudioStreamExtractor.invalidateCache(cleanId);
               try {
-                final fresh = await AudioStreamExtractor.extractAudioStream(cleanId);
+                final fresh =
+                    await AudioStreamExtractor.extractAudioStream(cleanId);
                 if (fresh != null) {
                   _streamUrl = fresh.url;
                   _headers = fresh.headers;
@@ -238,6 +245,12 @@ class YouTubeAudioSource extends StreamAudioSource {
         } finally {
           client?.close();
         }
+      }
+      if (targetEnd != null &&
+          currentPos < targetEnd &&
+          retryAttempts >= maxRetries) {
+        throw Exception(
+            'Stream interrupted before completion at byte $currentPos/$targetEnd');
       }
     } finally {
       if (cacheSink != null) {
