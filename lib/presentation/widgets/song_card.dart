@@ -126,6 +126,54 @@ class SongCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Consumer<DownloadProvider>(
+                    builder: (_, downloadProv, __) {
+                      final isDownloaded = downloadProv.isDownloaded(song.id);
+                      final isDownloading = downloadProv.isDownloading(song.id);
+                      final progress = downloadProv.getProgress(song.id);
+
+                      return Material(
+                        color: Colors.black.withValues(alpha: 0.72),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: isDownloading
+                              ? null
+                              : () => _handleDownloadTap(
+                                  context, downloadProv, isDownloaded),
+                          child: SizedBox(
+                            width: 34,
+                            height: 34,
+                            child: Center(
+                              child: isDownloading
+                                  ? SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        value: progress > 0.05 ? progress : null,
+                                        strokeWidth: 2,
+                                        color: AppColors.primaryAccent,
+                                      ),
+                                    )
+                                  : Icon(
+                                      isDownloaded
+                                          ? Icons.download_done_rounded
+                                          : Icons.download_rounded,
+                                      size: 19,
+                                      color: isDownloaded
+                                          ? const Color(0xFF00E676)
+                                          : Colors.white,
+                                    ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -237,6 +285,39 @@ class SongCard extends StatelessWidget {
                 .read<PlayerProvider>()
                 .playSong(song, newQueue: queueContext);
           },
+    );
+  }
+
+  Future<void> _handleDownloadTap(
+    BuildContext context,
+    DownloadProvider downloadProv,
+    bool isDownloaded,
+  ) async {
+    if (isDownloaded) {
+      await downloadProv.deleteDownload(song.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Download removed')),
+        );
+      }
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Downloading "${song.title}"...')),
+    );
+    final ok = await downloadProv.startDownload(song);
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Downloaded "${song.title}" for offline playback!'
+              : (downloadProv.lastError ?? 'Download failed'),
+        ),
+        backgroundColor: ok ? const Color(0xFF00E676) : Colors.redAccent,
+      ),
     );
   }
 
