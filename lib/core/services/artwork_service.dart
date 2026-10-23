@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+
+import '../constants/asset_paths.dart';
 import '../utils/logger.dart';
 
 /// Service responsible for providing local and remote artwork URIs
@@ -11,19 +13,48 @@ import '../utils/logger.dart';
 class ArtworkService {
   static String? _appLogoFilePath;
 
-  /// Ensures twilight_icon.png from assets is written to local filesystem
-  /// so it can be passed as a local file URI to AudioService/MediaItem.
+  static bool _isValidHttpUri(Uri? uri) =>
+      uri != null &&
+      (uri.scheme == 'http' || uri.scheme == 'https') &&
+      uri.host.isNotEmpty;
+
+  static Future<String?> _tryResolveAppLogoAssetPath() async {
+    final candidates = [
+      AssetPaths.logo,
+      AssetPaths.twilightIcon,
+      AssetPaths.legacyTwilightIcon,
+    ];
+
+    for (final assetPath in candidates) {
+      try {
+        await rootBundle.load(assetPath);
+        return assetPath;
+      } catch (_) {}
+    }
+
+    return null;
+  }
+
+  /// Ensures the app logo from assets is written to local filesystem so it can be
+  /// passed as a local file URI to AudioService/MediaItem.
   static Future<String?> getAppLogoFilePath() async {
     if (kIsWeb) return null;
     if (_appLogoFilePath != null && File(_appLogoFilePath!).existsSync()) {
       return _appLogoFilePath!;
     }
+
     try {
+      final assetPath = await _tryResolveAppLogoAssetPath();
+      if (assetPath == null) {
+        AppLogger.warning('No bundled app logo asset was found for notifications');
+        return null;
+      }
+
       final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/twilight_notification_logo.png');
+      final file =
+          File('${dir.path}/twilight_notification_logo.png').absolute;
       if (!file.existsSync() || file.lengthSync() < 1000) {
-        final byteData =
-            await rootBundle.load('assets/images/twilight_icon.png');
+        final byteData = await rootBundle.load(assetPath);
         await file.writeAsBytes(
           byteData.buffer
               .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes),
@@ -31,6 +62,7 @@ class ArtworkService {
         );
         AppLogger.info('Wrote default notification logo to: ${file.path}');
       }
+
       _appLogoFilePath = file.path;
       return _appLogoFilePath;
     } catch (e) {
@@ -48,8 +80,9 @@ class ArtworkService {
     String? songId,
   }) async {
     if (kIsWeb) {
-      if (thumbnailUrl != null && thumbnailUrl.startsWith('http')) {
-        return Uri.tryParse(thumbnailUrl);
+      final parsed = Uri.tryParse(thumbnailUrl ?? '');
+      if (_isValidHttpUri(parsed)) {
+        return parsed;
       }
       return null;
     }
@@ -82,7 +115,7 @@ class ArtworkService {
     }
 
     final parsed = Uri.tryParse(cleanUrl);
-    return parsed ?? cleanLogoUri;
+    return _isValidHttpUri(parsed) ? parsed : cleanLogoUri;
   }
 
   static void _cacheThumbnailInBackground(String url, File targetFile) {

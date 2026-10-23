@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/asset_paths.dart';
+
 class AppLogo extends StatelessWidget {
   final double size;
   final bool showText;
@@ -22,7 +24,7 @@ class AppLogo extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(size * 0.28),
             child: Image.asset(
-              'assets/images/twilight_icon.png',
+              AssetPaths.logo,
               width: size,
               height: size,
               fit: BoxFit.cover,
