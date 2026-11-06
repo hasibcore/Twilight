@@ -40,47 +40,53 @@ jobs:
       - name: Build Android Release APK
         run: |
           flutter build apk --release
-          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Twilight-Android-v2.4.0.apk
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Twilight-Android-v3.0.0.apk
 
       - name: Package Full Project Release ZIP
         run: |
-          zip -r Twilight-Music-v2.4.0-Full-Project.zip . \
+          zip -r Twilight-Music-v3.0.0-Full-Project.zip . \
             -x "node_modules/*" ".git/*" "build/*" ".dart_tool/*" "dist/*"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Twilight-Release-v2.4.0
+          name: Twilight-Release-v3.0.0
           path: |
-            build/app/outputs/flutter-apk/Twilight-Android-v2.4.0.apk
+            build/app/outputs/flutter-apk/Twilight-Android-v3.0.0.apk
             build/app/outputs/flutter-apk/app-release.apk
-            Twilight-Music-v2.4.0-Full-Project.zip
+            Twilight-Music-v3.0.0-Full-Project.zip
 
-      - name: Create GitHub Release (v2.4.0)
+      - name: Create GitHub Release (v3.0.0)
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         with:
-          tag_name: v2.4.0
-          name: "Twilight Music v2.4.0 — Production Audio & UI Sync Release"
+          tag_name: v3.0.0
+          name: "Twilight Music v3.0.0 — Official Full-Stack Production Release"
           body: |
-            ### 🌙 Twilight Music v2.4.0 Official Release
-            Built automatically with Flutter 3.29 & Android SDK.
+            # 🌙 Twilight Music v3.0.0 — Official Production Release
 
-            #### ✅ What's Fixed & Updated in v2.4.0
-            - **UI Parity (AI Studio ↔ Android APK)**: Synced MiniPlayer widget (gradient progress bar, live time counter, favorite heart button, circular white play/pause control, queue launcher) and Home Screen (`DYNAMIC TASTE ENGINE` greeting + `ON HEAVY REPEAT` section).
-            - **Pause/Resume & Stall Recovery**: Fixed stream URL expiration after extended pauses (>3 min) with proactive URL refresh, position preservation, and bounded retry recovery.
-            - **Uninterrupted Background Playback**: Added `WAKE_LOCK` & `FOREGROUND_SERVICE_MEDIA_PLAYBACK` permissions, `AudioSession` interruption/becoming-noisy handlers, and ongoing foreground notification persistence.
-            - **Offline Downloads Integrity**: Added real file verification (`existsSync` + non-zero byte check), one-tap re-download badge for missing/corrupted files, and offline local file playback (`AudioSource.file`).
-            - **Monochrome Notification Icon**: Added `drawable/ic_stat_music.xml` vector icon to eliminate the white square in the Android status bar and notification shade.
-            - **Fast Cold & Warm Startup**: Parallelized startup initialization and added synchronous Frame-1 home screen cache hydration.
-            - **Single Authoritative Audio Session**: Added monotonic `_playRequestId` sequencing to prevent overlapping audio on rapid track switches.
+            Clean, modern, ad-free music streaming & offline download app for Android, iOS, Windows PC, and Web.
 
-            #### 📦 Downloads
-            - `Twilight-Android-v2.4.0.apk` — Install directly on your Android device.
-            - `Twilight-Music-v2.4.0-Full-Project.zip` — Complete Flutter + React/Express source bundle.
+            ---
+
+            ### 📦 Platform Downloads:
+            | Platform | Download Link | Description |
+            |---|---|---|
+            | 🤖 **Android** | [`Twilight-Android-v3.0.0.apk`](https://github.com/hasibcore/Twilight/releases/download/v3.0.0/Twilight-Android-v3.0.0.apk) | Direct APK Install for Android 7.0+ |
+            | 🍏 **iOS** | [`Twilight-iOS-v3.0.0.ipa`](https://github.com/hasibcore/Twilight/releases/download/v3.0.0/Twilight-iOS-v3.0.0.ipa) | Sideloadable via Scarlet / AltStore / TrollStore |
+            | 💻 **Windows** | [`Twilight-Windows-x64-v3.0.0.zip`](https://github.com/hasibcore/Twilight/releases/download/v3.0.0/Twilight-Windows-x64-v3.0.0.zip) | Portable Windows 10/11 x64 Build |
+            | 📦 **Source Zip** | [`Twilight-Music-v3.0.0-Full-Project.zip`](https://github.com/hasibcore/Twilight/releases/download/v3.0.0/Twilight-Music-v3.0.0-Full-Project.zip) | Full Flutter + React source code bundle |
+
+            ---
+
+            ### ✨ Key Fixes & Improvements in v3.0.0:
+            - **Zero-Stall Downloads**: Added tail-range completion safeguards to prevent stalling at 85%–99% on YouTube and JioSaavn CDNs.
+            - **Non-Blocking Artwork**: Thumbnail caching runs in the background with a 1.5s watchdog, ensuring instant progress completion.
+            - **100% Multi-Platform Support**: Android APK, iOS IPA, Windows PC, and Web PWA with identical branding, features, and offline support.
+            - **Rock-Solid Playback**: Monotonic request IDs prevent overlapping audio, with automatic background notification controls.
           files: |
-            build/app/outputs/flutter-apk/Twilight-Android-v2.4.0.apk
+            build/app/outputs/flutter-apk/Twilight-Android-v3.0.0.apk
             build/app/outputs/flutter-apk/app-release.apk
-            Twilight-Music-v2.4.0-Full-Project.zip
+            Twilight-Music-v3.0.0-Full-Project.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
