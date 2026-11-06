@@ -11,7 +11,6 @@ import {
   Loader2,
   Download,
   Check,
-  GitBranch,
 } from 'lucide-react';
 import { useMusic } from '../context/MusicContext';
 import { Song } from '../types';
@@ -138,14 +137,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             {getGreeting()}
           </h1>
         </div>
-
-        <button
-          onClick={onOpenLanding}
-          className="px-4 py-2.5 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/30 cursor-pointer"
-        >
-          <GitBranch className="w-4 h-4 text-emerald-400" />
-          <span>GitHub Push &amp; Release (v2.4.0)</span>
-        </button>
       </div>
 
       {/* Vibe Categories Filter Chips */}
