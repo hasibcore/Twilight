@@ -117,7 +117,7 @@ class SettingsScreen extends StatelessWidget {
           _buildHeader(context, 'About & Legal'),
           ListTile(
             title: Text('App Version', style: TextStyle(color: AppColors.textPrimary(context), fontWeight: FontWeight.w600)),
-            subtitle: Text('Twilight Music Player v1.0.10 (Release)',
+            subtitle: Text('Twilight Music Player v3.0.0 (Release)',
                 style: TextStyle(color: AppColors.textSecondary(context), fontSize: 12)),
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -166,7 +166,7 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => showLicensePage(
               context: context,
               applicationName: 'Twilight Music Player',
-              applicationVersion: '1.0.10',
+              applicationVersion: '3.0.0',
             ),
           ),
           const SizedBox(height: 20),
