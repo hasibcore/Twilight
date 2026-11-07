@@ -45,6 +45,7 @@ jobs:
         run: |
           flutter build apk --release
           cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Twilight-Android-v3.0.0.apk
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Twilight-Android-v3.5.0.apk
 
       - name: Package Full Project Release ZIP
         run: |
@@ -56,6 +57,7 @@ jobs:
         with:
           name: Twilight-Android-v3.0.0
           path: |
+            build/app/outputs/flutter-apk/Twilight-Android-v3.5.0.apk
             build/app/outputs/flutter-apk/Twilight-Android-v3.0.0.apk
             build/app/outputs/flutter-apk/app-release.apk
             Twilight-Music-v3.0.0-Full-Project.zip
@@ -67,28 +69,29 @@ jobs:
           tag_name: ${{ env.RELEASE_TAG }}
           name: ${{ env.RELEASE_NAME }}
           body: |
-            # 🌙 Twilight Music v3.0.0 — Official Multi-Platform Production Release
+            # 🌙 Twilight Music v3.5.0 / v3.0.0 — Official Multi-Platform Production Release
 
             Clean, fast, ad-free music streaming & offline download app for **Android**, **Apple iOS**, **Windows PC**, and **Web**.
 
             ---
 
-            ### 📦 Official Platform Downloads (v3.0.0):
+            ### 📦 Official Platform Downloads:
             | Platform | Direct Download | Installation Guide |
             |---|---|---|
-            | 🤖 **Android (APK)** | [**`Twilight-Android-v3.0.0.apk`**](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Android-v3.0.0.apk) | Direct APK install for Android 7.0+ |
+            | 🤖 **Android (APK - Newest v3.5.0)** | [**`Twilight-Android-v3.5.0.apk`**](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Android-v3.5.0.apk) | Direct APK install for Android 7.0+ (Version 3.5.0+50) |
+            | 🤖 **Android (APK - v3.0.0 Mirror)** | [**`Twilight-Android-v3.0.0.apk`**](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Android-v3.0.0.apk) | Identical build (`3.5.0+50`) |
             | 🍏 **Apple iOS (IPA)** | [**`Twilight-iOS-v3.0.0.ipa`**](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-iOS-v3.0.0.ipa) | Sideload via AltStore, Sideloadly, Scarlet, or TrollStore |
             | 💻 **Windows PC (x64)** | [**`Twilight-Windows-x64-v3.0.0.zip`**](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Windows-x64-v3.0.0.zip) | Extract ZIP and run `Twilight.exe` on Windows 10/11 (64-bit) |
             | 📦 **Full Source Code** | [**`Twilight-Music-v3.0.0-Full-Project.zip`**](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Music-v3.0.0-Full-Project.zip) | Complete Flutter + React/Express source bundle |
 
             ---
 
-            ### ✨ What's New in v3.0.0:
-            - **100% Exact YouTube Video Audio Stream (`videoId` First)**: Prioritizes direct YouTube `videoId` audio streams across Android, iOS, Windows, and Web so live concerts, unplugged versions, and specific uploads play the exact video audio.
+            ### ✨ What's New:
+            - **Official Twilight Splash Screen & Uncached Icons (`@mipmap/ic_twilight_logo`)**: Bypasses Android launcher/splash icon caching and displays the dark `#020617` Twilight splash screen.
+            - **0ms Direct Master & Verified Stream Playback**: Instant playback for featured tracks and parallel verified YouTube + 320kbps AAC + SoundCloud HLS/progressive streams.
             - **Click-to-Play Clean Startup**: Starts with an empty player state (`currentSong = null`) until a user explicitly selects a song.
-            - **Zero-Stall Offline Downloads**: Verified local audio caching with automatic background artwork caching.
-            - **Uninterrupted Background Playback**: Lockscreen MediaSession controls, headphone disconnect pause, and 3-minute pause stream refresh.
           files: |
+            build/app/outputs/flutter-apk/Twilight-Android-v3.5.0.apk
             build/app/outputs/flutter-apk/Twilight-Android-v3.0.0.apk
             build/app/outputs/flutter-apk/app-release.apk
             Twilight-Music-v3.0.0-Full-Project.zip

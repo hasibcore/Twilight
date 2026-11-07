@@ -436,6 +436,15 @@ class YouTubeAudioSource extends StreamAudioSource {
     final mediaItem = buildMediaItem(artUri);
 
     if (streamResult != null) {
+      if (streamResult.url.contains('.m3u8') ||
+          streamResult.mimeType.toLowerCase().contains('mpegurl')) {
+        AppLogger.info('Streaming "${song.title}" via HlsAudioSource (${streamResult.mimeType})');
+        return HlsAudioSource(
+          Uri.parse(streamResult.url),
+          headers: streamResult.headers,
+          tag: mediaItem,
+        );
+      }
       if (streamResult.isDirectDownloadable || !streamResult.url.contains('googlevideo.com')) {
         AppLogger.info('Streaming "${song.title}" via direct native AudioSource.uri (${streamResult.mimeType}, ${streamResult.bitrate}bps)');
         return AudioSource.uri(
