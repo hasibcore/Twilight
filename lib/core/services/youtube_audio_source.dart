@@ -321,6 +321,7 @@ class YouTubeAudioSource extends StreamAudioSource {
         forceRefresh: forceRefresh,
         title: song.title,
         artist: song.artist,
+        durationSeconds: song.durationSeconds,
       );
       if (streamResult != null) {
         AppLogger.info('Web playing "${song.title}" via direct AudioSource.uri');
@@ -393,10 +394,10 @@ class YouTubeAudioSource extends StreamAudioSource {
 
     // 2. Check local temporary progressive cache directory
     final tempDir = await getTemporaryDirectory();
-    final cacheFileM4a = File('${tempDir.path}/twilight_cache_$cleanId.m4a');
-    final cacheFileWebm = File('${tempDir.path}/twilight_cache_$cleanId.webm');
-    final doneM4a = File('${tempDir.path}/twilight_cache_$cleanId.m4a.done');
-    final doneWebm = File('${tempDir.path}/twilight_cache_$cleanId.webm.done');
+    final cacheFileM4a = File('${tempDir.path}/twilight_v31_cache_$cleanId.m4a');
+    final cacheFileWebm = File('${tempDir.path}/twilight_v31_cache_$cleanId.webm');
+    final doneM4a = File('${tempDir.path}/twilight_v31_cache_$cleanId.m4a.done');
+    final doneWebm = File('${tempDir.path}/twilight_v31_cache_$cleanId.webm.done');
 
     if (cacheFileM4a.existsSync() && doneM4a.existsSync() && cacheFileM4a.lengthSync() > 100000) {
       artUri = await ArtworkService.getArtworkUri(thumbnailUrl: song.thumbnailUrl, songId: cleanId);
@@ -424,6 +425,7 @@ class YouTubeAudioSource extends StreamAudioSource {
         forceRefresh: forceRefresh,
         title: song.title,
         artist: song.artist,
+        durationSeconds: song.durationSeconds,
       ),
       ArtworkService.getArtworkUri(thumbnailUrl: song.thumbnailUrl, songId: cleanId),
     ]);
@@ -436,7 +438,7 @@ class YouTubeAudioSource extends StreamAudioSource {
       AppLogger.info('Streaming "${song.title}" via YouTubeAudioSource proxy (${streamResult.mimeType}, ${streamResult.bitrate}bps)');
       final isMp4 = streamResult.mimeType.toLowerCase().contains('mp4') ||
           streamResult.mimeType.toLowerCase().contains('m4a');
-      final cacheFile = File('${tempDir.path}/twilight_cache_$cleanId.${isMp4 ? "m4a" : "webm"}');
+      final cacheFile = File('${tempDir.path}/twilight_v31_cache_$cleanId.${isMp4 ? "m4a" : "webm"}');
       return YouTubeAudioSource.fromUrl(
         streamUrl: streamResult.url,
         headers: streamResult.headers,

@@ -528,7 +528,6 @@ async function resolveExactTrackStreamUrl(
     rEGYM2DarbQ: 'https://aac.saavncdn.com/649/d43613a52a0b2f0331a84e2ff9bb65ba_320.mp4',
     fJ9rUzIMcZQ: 'https://aac.saavncdn.com/806/442b9d1e36a4bcef050a32de50a82316_320.mp4',
     JirEG9LIJTU: 'https://aac.saavncdn.com/000/8a81a552431793831c58e09f3d7fde01_320.mp4',
-    x0idGvjG7ho: 'https://aac.saavncdn.com/000/8a81a552431793831c58e09f3d7fde01_320.mp4',
   };
   if (cleanId && knownDirectCdnMap[cleanId]) {
     const resolved: ResolvedStreamEntry = {
@@ -540,12 +539,17 @@ async function resolveExactTrackStreamUrl(
     return resolved;
   }
 
+  const wantsLiveOrConcert =
+    /\b(?:concert|live|anniversary|unplugged|acoustic|reprise|cover)\b/i.test(rawContextLower);
+
   const matchKnownTitleMaster = (): { url: string; mimeType: string } | null => {
+    if (wantsLiveOrConcert) return null;
     if (
       (normCoreTitle === 'bondho janala' || normCoreTitle.includes('bondho janala')) &&
       (rawContextLower.includes('shironamhin') || combinedArtistText.includes('shironamhin')) &&
       !normCoreTitle.includes('bhalobasha') &&
-      !normCoreTitle.includes('valobasha')
+      !normCoreTitle.includes('valobasha') &&
+      (effectiveDuration === 0 || Math.abs(effectiveDuration - 243) <= 22)
     ) {
       return {
         url: 'https://aac.saavncdn.com/000/8a81a552431793831c58e09f3d7fde01_320.mp4',
@@ -634,6 +638,7 @@ async function resolveExactTrackStreamUrl(
   if (
     cleanId === 'NQp3cbSkqbo' ||
     (normCoreTitle === 'tumi' &&
+      !wantsLiveOrConcert &&
       (combinedArtistText.includes('level five') ||
         combinedArtistText.includes('levelfive') ||
         rawContextLower.includes('level five') ||
@@ -652,7 +657,7 @@ async function resolveExactTrackStreamUrl(
   }
 
   // Tier 1: Exact-Track 320kbps AAC Direct CDN Resolver (JioSaavn Official API)
-  // Enforces strict title, artist, version (Coke Studio vs Album), and duration gates
+  // Enforces strict title, artist, version (Coke Studio vs Album, Live/Concert vs Studio), and duration gates
   if (title) {
     const queries = Array.from(
       new Set(
@@ -735,10 +740,18 @@ async function resolveExactTrackStreamUrl(
             }
           }
 
-          // 3. STRICT VERSION GATE (Coke Studio vs Original Studio Album):
+          // 3. STRICT VERSION GATE (Coke Studio vs Original Studio Album, Live/Concert vs Studio):
           const candIsCokeStudio = combined.includes('coke studio');
           if (wantsCokeStudio !== candIsCokeStudio) {
             continue;
+          }
+
+          const candIsLiveOrConcert =
+            /\b(?:concert|live|anniversary|unplugged|acoustic|reprise)\b/i.test(combined);
+          if (wantsLiveOrConcert && !candIsLiveOrConcert) {
+            if (effectiveDuration > 0 && candDurSec > 0 && Math.abs(candDurSec - effectiveDuration) > 18) {
+              continue;
+            }
           }
 
           const candNormFull = candTitle.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -747,21 +760,11 @@ async function resolveExactTrackStreamUrl(
             .replace(/[^a-z0-9\s]/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
-          const isExactTitleMatch =
-            candNormFull === normCoreTitle || candNormBase === normCoreTitle;
 
-          // 4. DURATION GATE:
-          // Keep tight 28s bound when distinguishing multi-length versions (e.g. Obak Bhalobasha 6:49 vs 7:20 vs 8:38),
-          // but allow up to 90s when exact song title + artist match with zero foreign title words (handles concert/intro videos).
+          // 4. STRICT DURATION GATE:
           if (effectiveDuration > 0 && candDurSec > 0) {
             const durDiff = Math.abs(candDurSec - effectiveDuration);
-            const maxAllowedDiff =
-              isObak || rawContextLower.includes('extended')
-                ? 28
-                : isExactTitleMatch && artistMatched
-                ? 95
-                : 45;
-            if (durDiff > maxAllowedDiff) {
+            if (durDiff > 28) {
               continue;
             }
           }

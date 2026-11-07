@@ -716,6 +716,7 @@ class PlayerProvider extends ChangeNotifier {
           forceRefresh: true,
           title: targetSong.title,
           artist: targetSong.artist,
+          durationSeconds: targetSong.durationSeconds,
         );
 
         if (fallbackResult != null && currentRequestId == _playRequestId && !_intentionalPause) {

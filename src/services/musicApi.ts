@@ -458,17 +458,24 @@ export class MusicApi {
     const titleLower = coreTitle.toLowerCase();
     const rawLower = `${song.title || ''} ${song.artist || ''} ${primaryArtist}`.toLowerCase();
     const dur = song.durationSeconds || 0;
+    const wantsSpecialVersion =
+      /\b(?:concert|live|anniversary|unplugged|acoustic|cover|remix|lofi|lo-fi|slowed|reverb|mashup|reprise)\b/i.test(
+        rawLower
+      );
 
     if (
+      !wantsSpecialVersion &&
       titleLower.includes('bondho janala') &&
       rawLower.includes('shironamhin') &&
       !titleLower.includes('bhalobasha') &&
-      !titleLower.includes('valobasha')
+      !titleLower.includes('valobasha') &&
+      (dur === 0 || Math.abs(dur - 243) <= 22)
     ) {
       return 'https://aac.saavncdn.com/000/8a81a552431793831c58e09f3d7fde01_320.mp4';
     }
 
     if (
+      !wantsSpecialVersion &&
       (titleLower.includes('obak bhalobasha') || titleLower.includes('obak valobasha')) &&
       rawLower.includes('warfaze')
     ) {
@@ -481,32 +488,37 @@ export class MusicApi {
       return VERIFIED_DIRECT_STREAMS.Qh_sxMN9UH8;
     }
 
-    if (titleLower === 'tumi' && (rawLower.includes('level five') || rawLower.includes('levelfive'))) {
+    if (
+      !wantsSpecialVersion &&
+      titleLower === 'tumi' &&
+      (rawLower.includes('level five') || rawLower.includes('levelfive')) &&
+      (dur === 0 || Math.abs(dur - 239) <= 22)
+    ) {
       return VERIFIED_DIRECT_STREAMS.NQp3cbSkqbo;
     }
 
-    if (titleLower.includes('despacito') && (rawLower.includes('fonsi') || rawLower.includes('yankee'))) {
+    if (!wantsSpecialVersion && titleLower.includes('despacito') && (rawLower.includes('fonsi') || rawLower.includes('yankee'))) {
       return VERIFIED_DIRECT_STREAMS.kJQP7kiw5Fk;
     }
-    if (titleLower.includes('shape of you') && rawLower.includes('sheeran')) {
+    if (!wantsSpecialVersion && titleLower.includes('shape of you') && rawLower.includes('sheeran')) {
       return VERIFIED_DIRECT_STREAMS.JGwWNGJdvx8;
     }
-    if (titleLower.includes('blinding lights') && rawLower.includes('weeknd')) {
+    if (!wantsSpecialVersion && titleLower.includes('blinding lights') && rawLower.includes('weeknd')) {
       return VERIFIED_DIRECT_STREAMS['4NRXx6U8ABQ'];
     }
-    if (titleLower.includes('counting stars') && rawLower.includes('onerepublic')) {
+    if (!wantsSpecialVersion && titleLower.includes('counting stars') && rawLower.includes('onerepublic')) {
       return VERIFIED_DIRECT_STREAMS.hT_nvWreIhg;
     }
-    if (titleLower === 'roar' && rawLower.includes('katy perry')) {
+    if (!wantsSpecialVersion && titleLower === 'roar' && rawLower.includes('katy perry')) {
       return VERIFIED_DIRECT_STREAMS.CevxZvSJLk8;
     }
-    if (titleLower === 'sugar' && rawLower.includes('maroon')) {
+    if (!wantsSpecialVersion && titleLower === 'sugar' && rawLower.includes('maroon')) {
       return VERIFIED_DIRECT_STREAMS['09R8_2nJtjg'];
     }
-    if (titleLower === 'hello' && rawLower.includes('adele')) {
+    if (!wantsSpecialVersion && titleLower === 'hello' && rawLower.includes('adele')) {
       return VERIFIED_DIRECT_STREAMS.YQHsXMglC9A;
     }
-    if (titleLower.includes('bohemian rhapsody') && rawLower.includes('queen')) {
+    if (!wantsSpecialVersion && titleLower.includes('bohemian rhapsody') && rawLower.includes('queen')) {
       return VERIFIED_DIRECT_STREAMS.fJ9rUzIMcZQ;
     }
 
