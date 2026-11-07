@@ -116,37 +116,37 @@ const List<Artist> _kFeaturedArtists = [
     id: 'art_weeknd',
     name: 'The Weeknd',
     thumbnailUrl: 'https://i.ytimg.com/vi/4NRXx6U8ABQ/hqdefault.jpg',
-    subscriberCount: '36.2M listeners',
+    subscriberCountFormatted: '36.2M listeners',
   ),
   Artist(
     id: 'art_arijit',
     name: 'Arijit Singh',
     thumbnailUrl: 'https://i.ytimg.com/vi/Umqb9KENgmk/hqdefault.jpg',
-    subscriberCount: '42.8M listeners',
+    subscriberCountFormatted: '42.8M listeners',
   ),
   Artist(
     id: 'art_ed',
     name: 'Ed Sheeran',
     thumbnailUrl: 'https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg',
-    subscriberCount: '54.9M listeners',
+    subscriberCountFormatted: '54.9M listeners',
   ),
   Artist(
     id: 'art_coldplay',
     name: 'Coldplay',
     thumbnailUrl: 'https://i.ytimg.com/vi/YykjpeuMNEk/hqdefault.jpg',
-    subscriberCount: '28.1M listeners',
+    subscriberCountFormatted: '28.1M listeners',
   ),
   Artist(
     id: 'art_dua',
     name: 'Dua Lipa',
     thumbnailUrl: 'https://i.ytimg.com/vi/TUVcZfQe-Kw/hqdefault.jpg',
-    subscriberCount: '24.6M listeners',
+    subscriberCountFormatted: '24.6M listeners',
   ),
   Artist(
     id: 'art_imagine',
     name: 'Imagine Dragons',
     thumbnailUrl: 'https://i.ytimg.com/vi/7wtfhZwyrcc/hqdefault.jpg',
-    subscriberCount: '31.4M listeners',
+    subscriberCountFormatted: '31.4M listeners',
   ),
 ];
 
@@ -612,7 +612,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              artist.subscriberCount,
+                              artist.subscriberCountFormatted,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
