@@ -3,37 +3,37 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Dark Theme Palette (YouTube Music inspired)
-  static const Color backgroundDark = Color(0xFF030303);
-  static const Color surfaceDark = Color(0xFF121212);
-  static const Color surfaceVariantDark = Color(0xFF1E1E1E);
-  static const Color cardDark = Color(0xFF242424);
+  // Twilight Dark Theme Palette (Matching AI Studio Slate-950 & Indigo-600 UI)
+  static const Color backgroundDark = Color(0xFF020617); // slate-950
+  static const Color surfaceDark = Color(0xFF0F172A); // slate-900
+  static const Color surfaceVariantDark = Color(0xFF1E293B); // slate-800
+  static const Color cardDark = Color(0xFF0F172A); // slate-900
   
   // Light Theme Palette
-  static const Color backgroundLight = Color(0xFFF9F9F9);
+  static const Color backgroundLight = Color(0xFFF8FAFC);
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceVariantLight = Color(0xFFEEEEEE);
-  static const Color cardLight = Color(0xFFF3F3F3);
+  static const Color surfaceVariantLight = Color(0xFFF1F5F9);
+  static const Color cardLight = Color(0xFFFFFFFF);
 
-  // Brand Accents
-  static const Color primary = Color(0xFFFF0033); // YouTube Red / Music Pink-Red
-  static const Color primaryAccent = Color(0xFFFF2A54);
-  static const Color secondaryAccent = Color(0xFFFF5252);
+  // Brand Accents (Indigo / Purple / Rose matching AI Studio Web UI)
+  static const Color primary = Color(0xFF4F46E5); // indigo-600
+  static const Color primaryAccent = Color(0xFF818CF8); // indigo-400
+  static const Color secondaryAccent = Color(0xFFA855F7); // purple-500
 
   // Text Colors
-  static const Color textPrimaryDark = Color(0xFFFFFFFF);
-  static const Color textSecondaryDark = Color(0xFFAAAAAA);
-  static const Color textTertiaryDark = Color(0xFF717171);
+  static const Color textPrimaryDark = Color(0xFFF8FAFC);
+  static const Color textSecondaryDark = Color(0xFF94A3B8); // slate-400
+  static const Color textTertiaryDark = Color(0xFF64748B); // slate-500
 
-  static const Color textPrimaryLight = Color(0xFF0F0F0F);
-  static const Color textSecondaryLight = Color(0xFF606060);
-  static const Color textTertiaryLight = Color(0xFF909090);
+  static const Color textPrimaryLight = Color(0xFF0F172A);
+  static const Color textSecondaryLight = Color(0xFF475569);
+  static const Color textTertiaryLight = Color(0xFF94A3B8);
 
   // Status & Actions
-  static const Color success = Color(0xFF4CAF50);
-  static const Color error = Color(0xFFE53935);
-  static const Color warning = Color(0xFFFFA000);
-  static const Color info = Color(0xFF29B6F6);
+  static const Color success = Color(0xFF10B981); // emerald-500
+  static const Color error = Color(0xFFF43F5E); // rose-500
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color info = Color(0xFF6366F1);
 
   // Theme-aware dynamic helpers
   static bool isDark(BuildContext context) =>
@@ -61,14 +61,14 @@ class AppColors {
       isDark(context) ? cardDark : cardLight;
 
   static Color icon(BuildContext context) =>
-      isDark(context) ? Colors.white70 : const Color(0xFF424242);
+      isDark(context) ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
 
   static Color iconMuted(BuildContext context) =>
-      isDark(context) ? Colors.white38 : const Color(0xFF757575);
+      isDark(context) ? const Color(0xFF64748B) : const Color(0xFF94A3B8);
 
   static const LinearGradient playerGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF20000A), Color(0xFF0F0005), Color(0xFF030303)],
+    colors: [Color(0xFF1E1B4B), Color(0xFF0F172A), Color(0xFF020617)],
   );
 }

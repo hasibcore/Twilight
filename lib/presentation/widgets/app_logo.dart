@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 class AppLogo extends StatelessWidget {
   final double size;
   final bool showText;
+  final String subtitle;
+  final bool stackedSubtitle;
 
   const AppLogo({
     super.key,
     this.size = 38,
     this.showText = false,
+    this.subtitle = 'MUSIC',
+    this.stackedSubtitle = false,
   });
 
   @override
@@ -16,46 +20,88 @@ class AppLogo extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // ignore: sized_box_for_whitespace
         Container(
           width: size,
           height: size,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(size * 0.25),
-            child: Image.asset(
-              'assets/images/twilight_icon.png',
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => CustomPaint(
-                size: Size(size, size),
-                painter: const _TwilightLogoPainter(),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0D0722),
+            borderRadius: BorderRadius.circular(size * 0.34),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.10),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF3B0764).withValues(alpha: 0.45),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(size * 0.34),
+            child: CustomPaint(
+              size: Size(size, size),
+              painter: const _TwilightLogoPainter(),
             ),
           ),
         ),
         if (showText) ...[
           const SizedBox(width: 10),
-          ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [
-                Color(0xFFFFFFFF),
-                Color(0xFF80D8FF),
-                Color(0xFFA7FFEB),
+          if (stackedSubtitle)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Twilight',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.4,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Color(0xFF818CF8),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.1,
+                  ),
+                ),
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ).createShader(bounds),
-            child: const Text(
-              'Twilight',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Twilight',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Color(0xFF818CF8),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+              ],
             ),
-          ),
         ],
       ],
     );
@@ -71,111 +117,70 @@ class _TwilightLogoPainter extends CustomPainter {
     final center = Offset(size.width * 0.5, size.height * 0.5);
     final w = size.width;
 
-    // 1. Deep Blue to Purple Starry Sky Background matching logo image
+    // 1. Deep Dark Violet Background (#110926 -> #0A0518 -> #1A0B36)
     final bgPaint = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFF0B1238), Color(0xFF1B0B3A), Color(0xFF3B083C)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
+        colors: [Color(0xFF110926), Color(0xFF0A0518), Color(0xFF1A0B36)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ).createShader(rect);
+    canvas.drawRect(rect, bgPaint);
 
-    final RRect rrect = RRect.fromRectAndRadius(rect, Radius.circular(size.width * 0.26));
-    canvas.drawRRect(rrect, bgPaint);
+    // 2. Inner Dark Circle (#0D0722)
+    final innerCirclePaint = Paint()
+      ..color = const Color(0xFF0D0722)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, w * 0.32, innerCirclePaint);
 
-    // 2. Horizontal Sound Wave Lines
-    final wavePaint = Paint()
-      ..color = const Color(0xFF00E5FF).withValues(alpha: 0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.02;
-
-    final wavePath = Path();
-    wavePath.moveTo(w * 0.08, center.dy);
-    wavePath.quadraticBezierTo(w * 0.25, center.dy - w * 0.06, w * 0.4, center.dy);
-    wavePath.quadraticBezierTo(w * 0.6, center.dy + w * 0.06, w * 0.75, center.dy);
-    wavePath.quadraticBezierTo(w * 0.88, center.dy - w * 0.04, w * 0.92, center.dy);
-    canvas.drawPath(wavePath, wavePaint);
-
-    // 3. Glowing Crescent Moon
-    final moonCenter = Offset(center.dx - w * 0.05, center.dy);
-    final moonRadius = w * 0.32;
-
-    final moonPath = Path();
-    moonPath.addArc(Rect.fromCircle(center: moonCenter, radius: moonRadius), -2.2, 3.4);
-    moonPath.arcTo(
-      Rect.fromCircle(center: Offset(moonCenter.dx + w * 0.14, moonCenter.dy - w * 0.05), radius: moonRadius * 0.85),
-      1.2,
-      -3.4,
-      false,
-    );
-    moonPath.close();
-
-    final moonPaint = Paint()
+    // 3. Outer Orbit Ring (#FF2A85 -> #9D4EDD -> #3A86FF)
+    final orbitPaint = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFFFFFFE0), Color(0xFF80FFEA), Color(0xFF00E5FF)],
+        colors: [Color(0xFFFF2A85), Color(0xFF9D4EDD), Color(0xFF3A86FF)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * 0.015;
+    canvas.drawCircle(center, w * 0.33, orbitPaint);
+
+    // 4. Orbiting Pink Dot
+    final dotPaint = Paint()
+      ..color = const Color(0xFFFF2A85)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(w * 0.73, w * 0.36), w * 0.028, dotPaint);
+
+    // 5. Inner Glowing Gradient Ring
+    final ringPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [
+          Color(0xFFFF3388),
+          Color(0xFFF72585),
+          Color(0xFF7209B7),
+          Color(0xFF3A86FF),
+          Color(0xFF4CC9F0),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * 0.032;
+    canvas.drawCircle(center, w * 0.255, ringPaint);
+
+    // 6. Center Play Triangle (#FF4088 -> #D92588 -> #7209B7)
+    final playPath = Path();
+    playPath.moveTo(w * 0.43, w * 0.37);
+    playPath.lineTo(w * 0.64, w * 0.50);
+    playPath.lineTo(w * 0.43, w * 0.63);
+    playPath.close();
+
+    final playPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFFF4088), Color(0xFFD92588), Color(0xFF7209B7)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ).createShader(rect)
       ..style = PaintingStyle.fill;
-
-    canvas.drawPath(moonPath, moonPaint);
-
-    // 4. Glowing Cyan Musical Double Note (♫)
-    final notePath = Path();
-    final nX = center.dx - w * 0.08;
-    final nY = center.dy - w * 0.14;
-
-    // Left Note Head
-    notePath.addOval(Rect.fromCircle(center: Offset(nX, nY + w * 0.28), radius: w * 0.08));
-    // Right Note Head
-    notePath.addOval(Rect.fromCircle(center: Offset(nX + w * 0.22, nY + w * 0.22), radius: w * 0.08));
-
-    // Stems & Beam
-    notePath.moveTo(nX + w * 0.06, nY + w * 0.28);
-    notePath.lineTo(nX + w * 0.06, nY);
-    notePath.lineTo(nX + w * 0.28, nY - w * 0.06);
-    notePath.lineTo(nX + w * 0.28, nY + w * 0.22);
-
-    final notePaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFE0FF4F), Color(0xFF00E5FF), Color(0xFF18FFFF)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(rect)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(notePath, notePaint);
-
-    final noteStroke = Paint()
-      ..color = const Color(0xFF00E5FF)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.035
-      ..strokeCap = StrokeCap.round;
-
-    final beamPath = Path();
-    beamPath.moveTo(nX + w * 0.06, nY + w * 0.28);
-    beamPath.lineTo(nX + w * 0.06, nY);
-    beamPath.lineTo(nX + w * 0.28, nY - w * 0.06);
-    beamPath.lineTo(nX + w * 0.28, nY + w * 0.22);
-    canvas.drawPath(beamPath, noteStroke);
-
-    // 5. Sparkle Stars
-    _drawStar(canvas, Offset(w * 0.2, w * 0.2), w * 0.025, const Color(0xFFE8FFB7));
-    _drawStar(canvas, Offset(w * 0.8, w * 0.22), w * 0.03, const Color(0xFF80FFEA));
-    _drawStar(canvas, Offset(w * 0.88, w * 0.55), w * 0.02, const Color(0xFFFFFFFF));
-    _drawStar(canvas, Offset(w * 0.15, w * 0.72), w * 0.02, const Color(0xFF80FFEA));
-  }
-
-  void _drawStar(Canvas canvas, Offset pos, double r, Color color) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    final path = Path();
-    path.moveTo(pos.dx, pos.dy - r);
-    path.quadraticBezierTo(pos.dx, pos.dy, pos.dx + r, pos.dy);
-    path.quadraticBezierTo(pos.dx, pos.dy, pos.dx, pos.dy + r);
-    path.quadraticBezierTo(pos.dx, pos.dy, pos.dx - r, pos.dy);
-    path.quadraticBezierTo(pos.dx, pos.dy, pos.dx, pos.dy - r);
-    canvas.drawPath(path, paint);
+    canvas.drawPath(playPath, playPaint);
   }
 
   @override
