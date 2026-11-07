@@ -10,6 +10,8 @@ import '../../widgets/song_card.dart';
 import '../playlist/create_playlist_dialog.dart';
 import '../playlist/playlist_detail_screen.dart';
 import '../../widgets/import_playlist_dialog.dart';
+import '../../widgets/app_logo.dart';
+import '../main_navigation_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});

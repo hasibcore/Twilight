@@ -8,6 +8,7 @@ import '../../widgets/import_playlist_dialog.dart';
 import '../../providers/player_provider.dart';
 import '../../../core/services/music_import_service.dart';
 import '../main_navigation_screen.dart';
+import '../../widgets/app_logo.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
