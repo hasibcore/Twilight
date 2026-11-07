@@ -336,11 +336,14 @@ export class MusicApi {
     rawArtist?: string
   ): { coreTitle: string; primaryArtist: string } {
     const metadataRegex =
-      /^(?:coke\s+studio.*|season\s*\d+|episode\s*\d+|ep\s*\.?\s*\d+|official.*|lyric(?:al)?.*|full\s+(?:song|video|audio|extended).*|audio\s+song.*|video\s+song.*|rabindra\s+sangeet.*|tagore\s+song.*|bangla\s+(?:gaan|song|music).*|hd|4k|hq|remaster.*|live.*|unplugged.*|t-series.*|sony\s+music.*|zee\s+music.*|svf.*|sangeet\s+bangla.*|soundtek.*|laser\s+vision.*|bhavna\s+records.*)$/i;
+      /^(?:coke\s+studio.*|season\s*\d+|episode\s*\d+|ep\s*\.?\s*\d+|official.*|lyric(?:al)?.*|full\s+(?:song|video|audio|extended).*|audio\s+song.*|video\s+song.*|rabindra\s+sangeet.*|tagore\s+song.*|bangla\s+(?:gaan|song|music).*|\d+(?:st|nd|rd|th)\s+anniversary.*|anniversary\s+concert.*|concert.*|hd|4k|hq|remaster.*|live.*|unplugged.*|t-series.*|sony\s+music.*|zee\s+music.*|svf.*|sangeet\s+bangla.*|soundtek.*|laser\s+vision.*|bhavna\s+records.*)$/i;
     const cleanText = (s: string) =>
       (s || '')
+        .replace(/#\S+/g, ' ')
+        .replace(/\(\s*[^\x00-\x7F]+\s*\)/g, ' ')
+        .replace(/\[\s*[^\x00-\x7F]+\s*\]/g, ' ')
         .replace(
-          /\([^)]*(?:official|video|audio|lyric|lyrics|visualizer|hd|4k|hq|remaster|live|mv|full\s+song|full\s+extended|coke\s+studio|season\s*\d+|mix|vibes)[^)]*\)/gi,
+          /\([^)]*(?:official|video|audio|lyric|lyrics|visualizer|hd|4k|hq|remaster|live|mv|full\s+song|full\s+extended|coke\s+studio|season\s*\d+|mix|vibes|concert|anniversary)[^)]*\)/gi,
           ' '
         )
         .replace(/\[[^\]]*\]/g, ' ')
@@ -365,7 +368,17 @@ export class MusicApi {
       .filter(Boolean);
     const meaningful = rawSegments.filter((s) => !metadataRegex.test(s));
     const candidates = meaningful.length > 0 ? meaningful : [cleanText(rawTitle)];
-    const primarySeg = candidates.find((s) => /[a-zA-Z]/.test(s)) || candidates[0] || '';
+    const latinCandidates = candidates.filter((s) => /[a-zA-Z]/.test(s));
+    const nonArtistLatinCandidates =
+      compactChannel.length >= 3 && latinCandidates.length > 1
+        ? latinCandidates.filter((s) => {
+            const c = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return c !== compactChannel;
+          })
+        : latinCandidates;
+
+    const primarySeg =
+      nonArtistLatinCandidates[0] || latinCandidates[0] || candidates[0] || '';
 
     let coreTitle = primarySeg;
     let extractedArtist = '';
@@ -409,7 +422,11 @@ export class MusicApi {
         (s) => s !== primarySeg && /[a-zA-Z]/.test(s) && !metadataRegex.test(s)
       );
       if (others.length > 0) {
-        extractedArtist = others[others.length - 1];
+        const channelMatchedSeg =
+          compactChannel.length >= 3
+            ? others.find((s) => s.toLowerCase().replace(/[^a-z0-9]/g, '') === compactChannel)
+            : undefined;
+        extractedArtist = channelMatchedSeg || others[others.length - 1];
       }
     }
 
@@ -441,6 +458,15 @@ export class MusicApi {
     const titleLower = coreTitle.toLowerCase();
     const rawLower = `${song.title || ''} ${song.artist || ''} ${primaryArtist}`.toLowerCase();
     const dur = song.durationSeconds || 0;
+
+    if (
+      titleLower.includes('bondho janala') &&
+      rawLower.includes('shironamhin') &&
+      !titleLower.includes('bhalobasha') &&
+      !titleLower.includes('valobasha')
+    ) {
+      return 'https://aac.saavncdn.com/000/8a81a552431793831c58e09f3d7fde01_320.mp4';
+    }
 
     if (
       (titleLower.includes('obak bhalobasha') || titleLower.includes('obak valobasha')) &&
@@ -554,6 +580,7 @@ export class MusicApi {
     const stopWords = new Set([
       'the', 'and', 'for', 'with', 'from', 'feat', 'ft', 'of', 'in', 'on', 'to', 'at', 'by',
       'official', 'music', 'video', 'audio', 'song', 'full', 'lyric', 'lyrics', 'coke', 'studio', 'bangla', 'season',
+      'anniversary', 'concert', 'live', 'version',
     ]);
     const normalizePhonetic = (s: string) =>
       s
@@ -625,6 +652,19 @@ export class MusicApi {
           }
 
           if (effectiveTokens.length > 0) {
+            const candWords = candTitle
+              .replace(/\([^)]*\)/g, ' ')
+              .replace(/\[[^\]]*\]/g, ' ')
+              .replace(/[^a-z0-9\s]/g, ' ')
+              .split(/\s+/)
+              .filter((w) => w.length >= 3 && !stopWords.has(w) && !/^\d+$/.test(w));
+            const hasForeignWord = candWords.some(
+              (cw) =>
+                !effectiveTokens.some((ct) => tokenMatches(ct, cw) || tokenMatches(cw, ct)) &&
+                !artistTokens.some((at) => tokenMatches(at, cw) || tokenMatches(cw, at))
+            );
+            if (hasForeignWord) return false;
+
             let matched = 0;
             for (const ct of effectiveTokens) {
               if (tokenMatches(ct, candTitle)) matched += 1;

@@ -1,4 +1,4 @@
-name: Build & Release Twilight Android APK (v2.4.0)
+name: Build & Release Twilight Android APK (v3.0.0)
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Flutter Release APK & Package v2.4.0
+    name: Build Flutter Release APK & Package v3.0.0
     runs-on: ubuntu-latest
 
     steps:
@@ -72,10 +72,10 @@ jobs:
             ### 📦 Platform Downloads:
             | Platform | Download Link | Description |
             |---|---|---|
-            | 🤖 **Android** | [`Twilight-Android-v3.0.0.apk`](https://github.com/hasibcore/Twilight/releases/download/v3.0.0/Twilight-Android-v3.0.0.apk) | Direct APK Install for Android 7.0+ |
-            | 🍏 **iOS** | [`Twilight-iOS-v3.0.0.ipa`](https://github.com/hasibcore/Twilight/releases/download/v3.0.0/Twilight-iOS-v3.0.0.ipa) | Sideloadable via Scarlet / AltStore / TrollStore |
-            | 💻 **Windows** | [`Twilight-Windows-x64-v3.0.0.zip`](https://github.com/hasibcore/Twilight/releases/download/v3.0.0/Twilight-Windows-x64-v3.0.0.zip) | Portable Windows 10/11 x64 Build |
-            | 📦 **Source Zip** | [`Twilight-Music-v3.0.0-Full-Project.zip`](https://github.com/hasibcore/Twilight/releases/download/v3.0.0/Twilight-Music-v3.0.0-Full-Project.zip) | Full Flutter + React source code bundle |
+            | 🤖 **Android** | [`Twilight-Android-v3.0.0.apk`](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Android-v3.0.0.apk) | Direct APK Install for Android 7.0+ |
+            | 🍏 **iOS** | [`Twilight-iOS-v3.0.0.ipa`](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-iOS-v3.0.0.ipa) | Sideloadable via Scarlet / AltStore / TrollStore |
+            | 💻 **Windows** | [`Twilight-Windows-x64-v3.0.0.zip`](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Windows-x64-v3.0.0.zip) | Portable Windows 10/11 x64 Build |
+            | 📦 **Source Zip** | [`Twilight-Music-v3.0.0-Full-Project.zip`](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Music-v3.0.0-Full-Project.zip) | Full Flutter + React source code bundle |
 
             ---
 

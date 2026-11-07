@@ -136,13 +136,14 @@ async function getSoundCloudClientId(): Promise<string> {
 }
 
 const METADATA_SEGMENT_REGEX =
-  /^(?:coke\s+studio(?:\s+bangla|\s+india|\s+pakistan|\s+global|\s+tamil|\s+bharat)?|season\s*\d+|episode\s*\d+|ep\s*\.?\s*\d+|s\d+\s*e\d+|official.*|lyric(?:al)?.*|full\s+(?:song|video|audio|album).*|audio\s+song.*|video\s+song.*|music\s+video.*|rabindra\s+sangeet.*|tagore\s+song.*|nazrul\s+geeti.*|bangla\s+(?:gaan|song|music|band|lofi).*|new\s+(?:bangla|bengali|hindi)\s+song.*|hd|4k|hq|remaster(?:ed)?|live(?:\s+performance|\s+session|\s+in\s+concert)?|unplugged|mtv\s+unplugged.*|t-series.*|sony\s+music.*|zee\s+music.*|svf.*|sangeet\s+bangla.*|soundtek.*|laser\s+vision.*|cd\s+choice.*|eagle\s+music.*|gaanchill.*|bhavna\s+records.*|g-series.*|agniveena.*|saregama.*|times\s+music.*|tips\s+official.*|yrf.*|speed\s+records.*)$/i;
+  /^(?:#.*|coke\s+studio(?:\s+bangla|\s+india|\s+pakistan|\s+global|\s+tamil|\s+bharat)?|season\s*\d+|episode\s*\d+|ep\s*\.?\s*\d+|s\d+\s*e\d+|official.*|lyric(?:al)?.*|full\s+(?:song|video|audio|album).*|audio\s+song.*|video\s+song.*|music\s+video.*|original\s+(?:track|song|audio|video).*|.*anniversary\s+concert.*|.*live\s+concert.*|rabindra\s+sangeet.*|tagore\s+song.*|nazrul\s+geeti.*|bangla\s+(?:gaan|song|music|band|lofi).*|new\s+(?:bangla|bengali|hindi)\s+song.*|hd|4k|hq|remaster(?:ed)?|live(?:\s+performance|\s+session|\s+in\s+concert)?|unplugged|mtv\s+unplugged.*|t-series.*|sony\s+music.*|zee\s+music.*|svf.*|sangeet\s+bangla.*|soundtek.*|laser\s+vision.*|cd\s+choice.*|eagle\s+music.*|gaanchill.*|bhavna\s+records.*|g-series.*|g\s+series.*|agniveena.*|saregama.*|times\s+music.*|tips\s+official.*|yrf.*|speed\s+records.*|satv\s+music.*)$/i;
 
 const CORE_TITLE_STOP_WORDS = new Set([
   'the', 'and', 'for', 'with', 'from', 'feat', 'ft', 'of', 'in', 'on', 'to', 'at', 'by', 'is', 'it', 'my', 'me',
   'official', 'music', 'video', 'audio', 'song', 'songs', 'full', 'lyric', 'lyrics', 'lyrical',
   'hd', '4k', 'hq', 'live', 'session', 'studio', 'coke', 'bangla', 'bengali', 'hindi',
   'season', 'episode', 'version', 'unplugged', 'rabindra', 'sangeet', 'tagore', 'records', 'creations',
+  'track', 'original', 'remastered', 'remaster', 'concert', 'anniversary',
 ]);
 
 function normalizePhoneticToken(str: string): string {
@@ -170,6 +171,32 @@ function tokenMatchesText(token: string, text: string): boolean {
   return pToken.length >= 2 && pText.includes(pToken);
 }
 
+function hasForeignSongTitleWords(
+  candTitle: string,
+  coreTokens: string[],
+  artistTokens: string[]
+): boolean {
+  if (!candTitle || coreTokens.length === 0) return false;
+  const candWords = candTitle
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 3 && !/^\d+$/.test(w));
+
+  for (const w of candWords) {
+    if (CORE_TITLE_STOP_WORDS.has(w)) continue;
+    const matchesCore = coreTokens.some((ct) => tokenMatchesText(ct, w) || tokenMatchesText(w, ct));
+    if (matchesCore) continue;
+    const matchesArtist = artistTokens.some(
+      (at) => tokenMatchesText(at, w) || tokenMatchesText(w, at)
+    );
+    if (matchesArtist) continue;
+    // Found an unrelated song title word (e.g., "valobashar" or "magh" in "Valobashar Magh Shironamhin -Bondho janala")
+    return true;
+  }
+  return false;
+}
+
 function getCoreTitleTokens(coreTitle: string): string[] {
   const allTokens = (coreTitle || '')
     .toLowerCase()
@@ -182,16 +209,19 @@ function getCoreTitleTokens(coreTitle: string): string[] {
 
 function cleanTrackQueryText(input: string): string {
   return (input || '')
+    .replace(/#\S+/g, ' ')
     .replace(
       /\([^)]*(?:official|video|audio|lyric|lyrics|visualizer|hd|4k|hq|remaster|live|mv|full\s+song|coke\s+studio|season\s*\d+)[^)]*\)/gi,
       ' '
     )
+    .replace(/\([^a-zA-Z0-9]*\)/g, ' ')
     .replace(
       /\[[^\]]*(?:official|video|audio|lyric|lyrics|visualizer|hd|4k|hq|remaster|live|mv|full\s+song|coke\s+studio|season\s*\d+)[^\]]*\]/gi,
       ' '
     )
+    .replace(/\[[^a-zA-Z0-9]*\]/g, ' ')
     .replace(
-      /\b(?:official\s+music\s+video|official\s+video|official\s+audio|lyric(?:al)?\s+video|full\s+video|full\s+audio|full\s+song|4k\s+remaster|audio\s+song|video\s+song)\b/gi,
+      /\b(?:official\s+music\s+video|official\s+video|official\s+audio|lyric(?:al)?\s+video|full\s+video|full\s+audio|full\s+song|4k\s+remaster|audio\s+song|video\s+song|original\s+track)\b/gi,
       ' '
     )
     .replace(/\s*[-|•·]\s*(?:official|topic|vevo).*$/gi, ' ')
@@ -206,8 +236,8 @@ export function extractCoreTrackAndArtist(
   rawArtist?: string
 ): { coreTitle: string; primaryArtist: string; secondaryArtist: string } {
   const cleanedChannelArtist = cleanTrackQueryText(rawArtist || '')
-    .replace(/(?:theband|official|vevo|topic|music|records|channel|band)$/i, ' ')
-    .replace(/\b(?:official|vevo|topic|music|records|channel|various\s+artists)\b/gi, ' ')
+    .replace(/(?:theband|official|vevo|topic|music|records|channel|band|world\s+music)$/i, ' ')
+    .replace(/\b(?:official|vevo|topic|music|records|channel|various\s+artists|world|satv|g\s+series)\b/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   const isChannelGenericOrShow =
@@ -222,13 +252,30 @@ export function extractCoreTrackAndArtist(
   const candidateSegments =
     meaningfulSegments.length > 0 ? meaningfulSegments : [cleanTrackQueryText(rawTitle)];
 
-  const latinSegment = candidateSegments.find((s) => /[a-zA-Z]/.test(s));
-  const primarySeg = latinSegment || candidateSegments[0] || '';
+  const compactChannel = cleanedChannelArtist.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const latinSegments = candidateSegments.filter((s) => /[a-zA-Z]/.test(s));
+  // Never pick a segment that is identical to the channel/artist name as coreTitle if another Latin segment exists
+  const nonArtistLatinSegments = latinSegments.filter((s) => {
+    const segCompact = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!compactChannel || !segCompact) return true;
+    return segCompact !== compactChannel;
+  });
+
+  const primarySeg =
+    nonArtistLatinSegments[0] || latinSegments[0] || candidateSegments[0] || '';
 
   let coreTitle = primarySeg;
   let extractedArtist = '';
 
-  const compactChannel = cleanedChannelArtist.toLowerCase().replace(/[^a-z0-9]/g, '');
+  // If one of the segments matched the channel artist, record it
+  const matchedArtistSeg = latinSegments.find((s) => {
+    const segCompact = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return compactChannel && segCompact === compactChannel;
+  });
+  if (matchedArtistSeg && matchedArtistSeg !== primarySeg) {
+    extractedArtist = matchedArtistSeg;
+  }
 
   if (primarySeg.includes('-') || primarySeg.includes('–') || primarySeg.includes('—')) {
     const hyphenParts = primarySeg
@@ -270,15 +317,15 @@ export function extractCoreTrackAndArtist(
   }
 
   if (!extractedArtist) {
-    const otherLatinSegments = candidateSegments.filter(
-      (s) => s !== primarySeg && /[a-zA-Z]/.test(s) && !METADATA_SEGMENT_REGEX.test(s)
+    const otherLatinSegments = latinSegments.filter(
+      (s) => s !== primarySeg && !METADATA_SEGMENT_REGEX.test(s)
     );
     if (otherLatinSegments.length > 0) {
-      extractedArtist = otherLatinSegments[otherLatinSegments.length - 1];
+      extractedArtist = otherLatinSegments[0];
     }
   }
 
-  // Prefer human-spaced extractedArtist (e.g. "LEVEL FIVE") when channel is a glued handle (e.g. "LEVELFIVEtheband")
+  // Prefer human-spaced extractedArtist (e.g. "LEVEL FIVE", "Shironamhin") when channel is generic or a glued handle
   const preferExtracted =
     Boolean(extractedArtist) &&
     (isChannelGenericOrShow ||
@@ -480,6 +527,8 @@ async function resolveExactTrackStreamUrl(
     '8iuZrJumCLo': 'https://aac.saavncdn.com/296/ab693f16b6e4708e6fe9763c3fe20329_320.mp4',
     rEGYM2DarbQ: 'https://aac.saavncdn.com/649/d43613a52a0b2f0331a84e2ff9bb65ba_320.mp4',
     fJ9rUzIMcZQ: 'https://aac.saavncdn.com/806/442b9d1e36a4bcef050a32de50a82316_320.mp4',
+    JirEG9LIJTU: 'https://aac.saavncdn.com/000/8a81a552431793831c58e09f3d7fde01_320.mp4',
+    x0idGvjG7ho: 'https://aac.saavncdn.com/000/8a81a552431793831c58e09f3d7fde01_320.mp4',
   };
   if (cleanId && knownDirectCdnMap[cleanId]) {
     const resolved: ResolvedStreamEntry = {
@@ -492,6 +541,17 @@ async function resolveExactTrackStreamUrl(
   }
 
   const matchKnownTitleMaster = (): { url: string; mimeType: string } | null => {
+    if (
+      (normCoreTitle === 'bondho janala' || normCoreTitle.includes('bondho janala')) &&
+      (rawContextLower.includes('shironamhin') || combinedArtistText.includes('shironamhin')) &&
+      !normCoreTitle.includes('bhalobasha') &&
+      !normCoreTitle.includes('valobasha')
+    ) {
+      return {
+        url: 'https://aac.saavncdn.com/000/8a81a552431793831c58e09f3d7fde01_320.mp4',
+        mimeType: 'audio/mp4',
+      };
+    }
     if (normCoreTitle.includes('despacito') && (rawContextLower.includes('fonsi') || rawContextLower.includes('yankee'))) {
       return { url: '/audio/kJQP7kiw5Fk.m4a', mimeType: 'audio/mp4' };
     }
@@ -638,8 +698,12 @@ async function resolveExactTrackStreamUrl(
           const candDurSec = Number(moreInfo?.duration || 0);
 
           // 1. STRICT CORE-TITLE MATCH GATE:
-          // Never accept another song from the same channel/show/artist unless the song title itself matches
+          // Never accept another song from the same channel/show/artist/album unless the song title itself matches
+          let artistMatched = false;
           if (coreTokens.length > 0) {
+            if (hasForeignSongTitleWords(candTitle, coreTokens, artistTokens)) {
+              continue;
+            }
             let matchedCoreCount = 0;
             for (const ct of coreTokens) {
               if (tokenMatchesText(ct, candTitle)) {
@@ -652,7 +716,7 @@ async function resolveExactTrackStreamUrl(
                 : coreTokens.length === 2
                 ? 2
                 : Math.max(2, Math.ceil(coreTokens.length * 0.6));
-            const artistMatched =
+            artistMatched =
               artistTokens.length > 0 && artistTokens.some((at) => tokenMatchesText(at, combined));
             const hasDistinctiveTokenAndArtist =
               matchedCoreCount >= 1 &&
@@ -677,22 +741,32 @@ async function resolveExactTrackStreamUrl(
             continue;
           }
 
-          // 4. STRICT DURATION GATE:
-          // Reject candidates whose duration differs by >28s from the clicked video (e.g. 7:20 or 8:38 vs 6:48)
-          if (effectiveDuration > 0 && candDurSec > 0) {
-            const durDiff = Math.abs(candDurSec - effectiveDuration);
-            if (durDiff > 28) {
-              continue;
-            }
-          }
-
-          let score = 20 - i * 2;
           const candNormFull = candTitle.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
           const candNormBase = candTitle
             .split('|')[0]
             .replace(/[^a-z0-9\s]/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
+          const isExactTitleMatch =
+            candNormFull === normCoreTitle || candNormBase === normCoreTitle;
+
+          // 4. DURATION GATE:
+          // Keep tight 28s bound when distinguishing multi-length versions (e.g. Obak Bhalobasha 6:49 vs 7:20 vs 8:38),
+          // but allow up to 90s when exact song title + artist match with zero foreign title words (handles concert/intro videos).
+          if (effectiveDuration > 0 && candDurSec > 0) {
+            const durDiff = Math.abs(candDurSec - effectiveDuration);
+            const maxAllowedDiff =
+              isObak || rawContextLower.includes('extended')
+                ? 28
+                : isExactTitleMatch && artistMatched
+                ? 95
+                : 45;
+            if (durDiff > maxAllowedDiff) {
+              continue;
+            }
+          }
+
+          let score = 20 - i * 2;
 
           if (candNormFull === normCoreTitle) {
             score += 35;
@@ -826,6 +900,11 @@ async function resolveExactTrackStreamUrl(
           const candDurSec = Math.round(Number(item?.duration || 0) / 1000);
 
           if (coreTokens.length > 0) {
+            // Reject tracks that contain foreign song title words (e.g. "Valobashar Magh Shironamhin -Bondho janala"
+            // when user clicked "Bondho Janala")
+            if (hasForeignSongTitleWords(candTitle, coreTokens, artistTokens)) {
+              continue;
+            }
             let matchedCoreCount = 0;
             for (const ct of coreTokens) {
               if (tokenMatchesText(ct, candTitle)) matchedCoreCount += 1;
@@ -846,7 +925,9 @@ async function resolveExactTrackStreamUrl(
 
           if (effectiveDuration > 0 && candDurSec > 0) {
             const durDiff = Math.abs(candDurSec - effectiveDuration);
-            if (durDiff > 35) continue;
+            const maxScDiff =
+              isObak || rawContextLower.includes('extended') ? 35 : artistMatched ? 90 : 35;
+            if (durDiff > maxScDiff) continue;
           }
 
           const candIsCoverOrRemix = /\b(?:cover|remix|karaoke|instrumental|nightcore|slowed)\b/.test(
@@ -1028,6 +1109,9 @@ async function resolveExactTrackStreamUrl(
             return false;
           }
           if (coreTokens.length > 0) {
+            if (hasForeignSongTitleWords(candTitle, coreTokens, artistTokens)) {
+              return false;
+            }
             let matched = 0;
             for (const ct of coreTokens) {
               if (tokenMatchesText(ct, candTitle)) matched += 1;

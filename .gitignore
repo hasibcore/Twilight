@@ -10,3 +10,4 @@ build/
 landing/downloads/
 .aistudio/
 public/assets/aistudio/
+bun.lock

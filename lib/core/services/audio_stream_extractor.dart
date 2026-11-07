@@ -119,7 +119,7 @@ class AudioStreamExtractor {
   }
 
   static final RegExp _metadataSegmentRegex = RegExp(
-    r'^(?:coke\s+studio(?:\s+bangla|\s+india|\s+pakistan|\s+global|\s+tamil|\s+bharat)?|season\s*\d+|episode\s*\d+|ep\s*\.?\s*\d+|s\d+\s*e\d+|official.*|lyric(?:al)?.*|full\s+(?:song|video|audio|album).*|audio\s+song.*|video\s+song.*|music\s+video.*|rabindra\s+sangeet.*|tagore\s+song.*|nazrul\s+geeti.*|bangla\s+(?:gaan|song|music|band|lofi).*|new\s+(?:bangla|bengali|hindi)\s+song.*|hd|4k|hq|remaster(?:ed)?|live(?:\s+performance|\s+session|\s+in\s+concert)?|unplugged|mtv\s+unplugged.*|t-series.*|sony\s+music.*|zee\s+music.*|svf.*|sangeet\s+bangla.*|soundtek.*|laser\s+vision.*|cd\s+choice.*|eagle\s+music.*|gaanchill.*|bhavna\s+records.*|g-series.*|agniveena.*|saregama.*|times\s+music.*|tips\s+official.*|yrf.*|speed\s+records.*)$',
+    r'^(?:coke\s+studio(?:\s+bangla|\s+india|\s+pakistan|\s+global|\s+tamil|\s+bharat)?|season\s*\d+|episode\s*\d+|ep\s*\.?\s*\d+|s\d+\s*e\d+|official.*|lyric(?:al)?.*|full\s+(?:song|video|audio|album).*|audio\s+song.*|video\s+song.*|music\s+video.*|rabindra\s+sangeet.*|tagore\s+song.*|nazrul\s+geeti.*|bangla\s+(?:gaan|song|music|band|lofi).*|new\s+(?:bangla|bengali|hindi)\s+song.*|\d+(?:st|nd|rd|th)\s+anniversary(?:\s+concert.*)?|anniversary\s+concert.*|live\s+concert.*|concert.*|hd|4k|hq|remaster(?:ed)?|live(?:\s+performance|\s+session|\s+in\s+concert)?|unplugged|mtv\s+unplugged.*|t-series.*|sony\s+music.*|zee\s+music.*|svf.*|sangeet\s+bangla.*|soundtek.*|laser\s+vision.*|cd\s+choice.*|eagle\s+music.*|gaanchill.*|bhavna\s+records.*|g-series.*|agniveena.*|saregama.*|times\s+music.*|tips\s+official.*|yrf.*|speed\s+records.*)$',
     caseSensitive: false,
   );
 
@@ -128,6 +128,7 @@ class AudioStreamExtractor {
     'official', 'music', 'video', 'audio', 'song', 'songs', 'full', 'lyric', 'lyrics', 'lyrical',
     'hd', '4k', 'hq', 'live', 'session', 'studio', 'coke', 'bangla', 'bengali', 'hindi',
     'season', 'episode', 'version', 'unplugged', 'rabindra', 'sangeet', 'tagore', 'records', 'creations',
+    'anniversary', 'concert', 'performance', 'track', 'album',
   };
 
   static String _normalizePhoneticToken(String input) {
@@ -166,11 +167,38 @@ class AudioStreamExtractor {
     return filtered.isNotEmpty ? filtered : allTokens;
   }
 
+  static bool _hasForeignSongTitleWords(
+    String candTitle,
+    List<String> coreTokens,
+    List<String> artistTokens,
+  ) {
+    if (coreTokens.isEmpty) return false;
+    final stripped = candTitle
+        .toLowerCase()
+        .replaceAll(RegExp(r'\([^)]*\)'), ' ')
+        .replaceAll(RegExp(r'\[[^\]]*\]'), ' ')
+        .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+        .split(RegExp(r'\s+'))
+        .where((w) => w.length >= 3 && !_coreTitleStopWords.contains(w) && !RegExp(r'^\d+$').hasMatch(w))
+        .toList();
+    for (final w in stripped) {
+      final matchesCore = coreTokens.any((ct) => _tokenMatchesText(ct, w) || _tokenMatchesText(w, ct));
+      final matchesArtist = artistTokens.any((at) => _tokenMatchesText(at, w) || _tokenMatchesText(w, at));
+      if (!matchesCore && !matchesArtist) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// Cleans YouTube video titles and channel names into a canonical song search query
   static String cleanTrackText(String input) {
     return input
-        .replaceAll(RegExp(r'\([^)]*(?:official|video|audio|lyric|lyrics|visualizer|hd|4k|hq|remaster|live|mv|full\s+song|coke\s+studio|season\s*\d+)[^)]*\)', caseSensitive: false), ' ')
-        .replaceAll(RegExp(r'\[[^\]]*(?:official|video|audio|lyric|lyrics|visualizer|hd|4k|hq|remaster|live|mv|full\s+song|coke\s+studio|season\s*\d+)[^\]]*\]', caseSensitive: false), ' ')
+        .replaceAll(RegExp(r'#\S+'), ' ')
+        .replaceAll(RegExp(r'\(\s*[^\x00-\x7F]+\s*\)'), ' ')
+        .replaceAll(RegExp(r'\[\s*[^\x00-\x7F]+\s*\]'), ' ')
+        .replaceAll(RegExp(r'\([^)]*(?:official|video|audio|lyric|lyrics|visualizer|hd|4k|hq|remaster|live|mv|full\s+song|coke\s+studio|season\s*\d+|anniversary|concert)[^)]*\)', caseSensitive: false), ' ')
+        .replaceAll(RegExp(r'\[[^\]]*(?:official|video|audio|lyric|lyrics|visualizer|hd|4k|hq|remaster|live|mv|full\s+song|coke\s+studio|season\s*\d+|anniversary|concert)[^\]]*\]', caseSensitive: false), ' ')
         .replaceAll(RegExp(r'\b(?:official\s+music\s+video|official\s+video|official\s+audio|lyric(?:al)?\s+video|full\s+video|full\s+audio|full\s+song|4k\s+remaster|audio\s+song|video\s+song)\b', caseSensitive: false), ' ')
         .replaceAll(RegExp(r'\s*[-|•·]\s*(?:official|topic|vevo).*$', caseSensitive: false), ' ')
         .replaceAll(RegExp(r'\b(?:VEVO|Topic)\b', caseSensitive: false), ' ')
@@ -200,11 +228,19 @@ class AudioStreamExtractor {
     final candidateSegments =
         meaningfulSegments.isNotEmpty ? meaningfulSegments : [cleanTrackText(rawTitle)];
 
-    final latinSegment = candidateSegments.firstWhere(
-      (s) => RegExp(r'[a-zA-Z]').hasMatch(s),
-      orElse: () => candidateSegments.isNotEmpty ? candidateSegments.first : '',
-    );
-    final primarySeg = latinSegment;
+    final latinCandidates = candidateSegments.where((s) => RegExp(r'[a-zA-Z]').hasMatch(s)).toList();
+    final nonArtistLatinCandidates = compactChannel.length >= 3 && latinCandidates.length > 1
+        ? latinCandidates.where((s) {
+            final c = s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+            return c != compactChannel;
+          }).toList()
+        : latinCandidates;
+
+    final primarySeg = nonArtistLatinCandidates.isNotEmpty
+        ? nonArtistLatinCandidates.first
+        : (latinCandidates.isNotEmpty
+            ? latinCandidates.first
+            : (candidateSegments.isNotEmpty ? candidateSegments.first : ''));
 
     String coreTitle = primarySeg;
     String extractedArtist = '';
@@ -250,7 +286,10 @@ class AudioStreamExtractor {
           .where((s) => s != primarySeg && RegExp(r'[a-zA-Z]').hasMatch(s) && !_metadataSegmentRegex.hasMatch(s))
           .toList();
       if (otherLatinSegments.isNotEmpty) {
-        extractedArtist = otherLatinSegments.last;
+        final channelMatchedSeg = compactChannel.length >= 3
+            ? otherLatinSegments.where((s) => s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '') == compactChannel).toList()
+            : <String>[];
+        extractedArtist = channelMatchedSeg.isNotEmpty ? channelMatchedSeg.first : otherLatinSegments.last;
       }
     }
 
@@ -559,8 +598,11 @@ class AudioStreamExtractor {
         final combined = '$candTitle $candSubtitle $candAlbum';
 
         // STRICT CORE-TITLE MATCH GATE:
-        // Reject candidates that do not match the core song title tokens
+        // Reject candidates that do not match the core song title tokens or contain foreign song title words
         if (coreTokens.isNotEmpty) {
+          if (_hasForeignSongTitleWords(candTitle, coreTokens, artistTokens)) {
+            continue;
+          }
           int matchedCoreCount = 0;
           for (final ct in coreTokens) {
             if (_tokenMatchesText(ct, candTitle)) {
@@ -723,6 +765,9 @@ class AudioStreamExtractor {
       final combined = '$candTitle $candUser';
 
       if (coreTokens.isNotEmpty) {
+        if (_hasForeignSongTitleWords(candTitle, coreTokens, artistTokens)) {
+          continue;
+        }
         int matched = 0;
         for (final ct in coreTokens) {
           if (_tokenMatchesText(ct, candTitle)) matched += 1;
@@ -808,6 +853,9 @@ class AudioStreamExtractor {
       final candArtist = primaryList.map((a) => a['name']?.toString() ?? '').join(' ').toLowerCase();
 
       if (coreTokens.isNotEmpty) {
+        if (_hasForeignSongTitleWords(candTitle, coreTokens, artistTokens)) {
+          continue;
+        }
         int matched = 0;
         for (final ct in coreTokens) {
           if (_tokenMatchesText(ct, candTitle)) matched += 1;
