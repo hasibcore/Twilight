@@ -3,17 +3,9 @@ import {
   User,
   LogIn,
   LogOut,
-  ShieldCheck,
   CheckCircle2,
   Sliders,
-  Sparkles,
-  Info,
   AlertCircle,
-  Clock,
-  GitBranch,
-  Download,
-  ExternalLink,
-  Loader2,
 } from 'lucide-react';
 import { useMusic } from '../context/MusicContext';
 
@@ -39,58 +31,6 @@ export const ProfileScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Full App GitHub Push & Release State
-  const [githubRepo, setGithubRepo] = useState('hasibcore/Twilight');
-  const [githubToken, setGithubToken] = useState('');
-  const [isPushingGithub, setIsPushingGithub] = useState(false);
-  const [githubStatus, setGithubStatus] = useState<{
-    success: boolean;
-    pushedFullRepo?: boolean;
-    commitSha?: string;
-    releaseUrl?: string;
-    actionsUrl?: string;
-    error?: string;
-  } | null>(null);
-
-  const handlePushAndReleaseGithub = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsPushingGithub(true);
-    setGithubStatus(null);
-    try {
-      const res = await fetch('/api/release/github', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          repo: githubRepo,
-          token: githubToken,
-          tagName: 'v2.4.0',
-        }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setGithubStatus({
-          success: true,
-          pushedFullRepo: data.pushedFullRepo,
-          commitSha: data.commitSha,
-          releaseUrl: data.releaseUrl,
-          actionsUrl: data.actionsUrl,
-        });
-      } else {
-        setGithubStatus({
-          success: false,
-          error: data.error || 'Failed to push and release to GitHub.',
-        });
-      }
-    } catch (err: any) {
-      setGithubStatus({
-        success: false,
-        error: err?.message || 'Network error while pushing to GitHub.',
-      });
-    } finally {
-      setIsPushingGithub(false);
-    }
-  };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,139 +200,6 @@ export const ProfileScreen: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Full App GitHub Push & Release Card */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-950/40 via-slate-900 to-indigo-950/40 border border-emerald-500/30 shadow-xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-              <GitBranch className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-white">
-                Full App GitHub Push &amp; Release (v2.4.0)
-              </h3>
-              <p className="text-xs text-slate-400">
-                Pushes the full Flutter + React/Express codebase to <code>main</code>, tags <code>v2.4.0</code>, publishes the GitHub Release, and triggers the Android APK build
-              </p>
-            </div>
-          </div>
-
-          <a
-            href="/api/release/project-archive"
-            download="Twilight-Music-v2.4.0-Full-Project.tar.gz"
-            className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs flex items-center gap-2 self-start sm:self-auto shrink-0 transition-all"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download Full App (.tar.gz)</span>
-          </a>
-        </div>
-
-        <form onSubmit={handlePushAndReleaseGithub} className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-          <div>
-            <label className="block text-[11px] font-semibold text-slate-400 mb-1">
-              GitHub Repository
-            </label>
-            <input
-              type="text"
-              value={githubRepo}
-              onChange={(e) => setGithubRepo(e.target.value)}
-              placeholder="hasibcore/Twilight"
-              required
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-semibold text-slate-400 mb-1">
-              GitHub Personal Access Token (repo scope)
-            </label>
-            <input
-              type="password"
-              value={githubToken}
-              onChange={(e) => setGithubToken(e.target.value)}
-              placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-              required
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          <div className="flex items-end">
-            <button
-              type="submit"
-              disabled={isPushingGithub}
-              className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
-            >
-              {isPushingGithub ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Pushing Full App &amp; Release...</span>
-                </>
-              ) : (
-                <>
-                  <GitBranch className="w-4 h-4" />
-                  <span>Push Full App &amp; Release v2.4.0</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-
-        {githubStatus && (
-          <div
-            className={`p-4 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-              githubStatus.success
-                ? 'bg-emerald-950/50 border-emerald-500/30 text-emerald-200'
-                : 'bg-rose-950/50 border-rose-500/30 text-rose-200'
-            }`}
-          >
-            <div className="flex items-start gap-2.5">
-              {githubStatus.success ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              )}
-              <div>
-                <p className="font-bold">
-                  {githubStatus.success
-                    ? `Full App Pushed & v2.4.0 Release Published${githubStatus.commitSha ? ` (commit ${githubStatus.commitSha})` : ''}!`
-                    : 'GitHub Push & Release Error'}
-                </p>
-                <p className="text-slate-300 mt-0.5">
-                  {githubStatus.success
-                    ? 'Pushed full repository to main, tagged v2.4.0, uploaded Twilight-Music-v2.4.0-Full-Project.tar.gz, and triggered the GitHub Actions APK build.'
-                    : githubStatus.error}
-                </p>
-              </div>
-            </div>
-
-            {githubStatus.releaseUrl && (
-              <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href={githubStatus.releaseUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors"
-                >
-                  <span>View Release</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-                {githubStatus.actionsUrl && (
-                  <a
-                    href={githubStatus.actionsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition-colors"
-                  >
-                    <span>APK Build</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Authentication Modal */}
