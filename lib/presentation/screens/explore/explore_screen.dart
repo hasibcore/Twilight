@@ -127,7 +127,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const AppLogo(
+                  AppLogo(
                     size: 38,
                     showText: true,
                     subtitle: 'MUSIC',

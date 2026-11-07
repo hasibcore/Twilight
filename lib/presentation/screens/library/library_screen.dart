@@ -66,7 +66,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const AppLogo(
+                      AppLogo(
                         size: 38,
                         showText: true,
                         subtitle: 'MUSIC',
@@ -111,6 +111,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
                       ),
                     ],
                   ),
+                ),
                 TabBar(
                   controller: _tabController,
                   isScrollable: true,

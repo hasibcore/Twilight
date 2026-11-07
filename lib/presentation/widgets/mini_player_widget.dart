@@ -75,12 +75,12 @@ class MiniPlayerWidget extends StatelessWidget {
           color: bgColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? Colors.white.withValues(alpha: 0.10) : Colors.black12,
+            color: Colors.white.withValues(alpha: 0.10),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.55 : 0.12),
+              color: Colors.black.withValues(alpha: 0.55),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -97,7 +97,7 @@ class MiniPlayerWidget extends StatelessWidget {
                 width: double.infinity,
                 child: Stack(
                   children: [
-                    Container(color: isDark ? Colors.white10 : Colors.black12),
+                    Container(color: Colors.white10),
                     FractionallySizedBox(
                       widthFactor: progress,
                       child: Container(
@@ -148,7 +148,7 @@ class MiniPlayerWidget extends StatelessWidget {
                             errorWidget: (_, __, ___) => Container(
                               width: 46,
                               height: 46,
-                              color: isDark ? Colors.grey.shade900 : Colors.grey.shade200,
+                              color: const Color(0xFF1E293B),
                               child: Icon(Icons.music_note, color: secondaryTextColor),
                             ),
                           );
@@ -157,7 +157,7 @@ class MiniPlayerWidget extends StatelessWidget {
                           key: ValueKey('mini_empty_${currentSong.id}'),
                           width: 46,
                           height: 46,
-                          color: isDark ? Colors.grey.shade900 : Colors.grey.shade200,
+                          color: const Color(0xFF1E293B),
                           child: Icon(Icons.music_note, color: secondaryTextColor),
                         );
                       },

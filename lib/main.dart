@@ -188,7 +188,7 @@ class _TwilightSplashGateState extends State<_TwilightSplashGate> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const AppLogo(size: 88, showText: false),
+                      AppLogo(size: 88, showText: false),
                       const SizedBox(height: 20),
                       const Text(
                         'Twilight',

@@ -306,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const AppLogo(
+                  AppLogo(
                     size: 38,
                     showText: true,
                     subtitle: 'MUSIC',
