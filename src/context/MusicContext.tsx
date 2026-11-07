@@ -157,16 +157,16 @@ async function deleteOfflineBlobFromIdb(songId: string): Promise<void> {
 }
 
 export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Playback state
-  const [currentSong, setCurrentSong] = useState<Song | null>(() => POPULAR_FEATURED_SONGS[0]);
+  // Playback state: start with no active song until the user explicitly clicks a track
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [queue, setQueue] = useState<Song[]>(() => POPULAR_FEATURED_SONGS);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRefreshingStream, setIsRefreshingStream] = useState<boolean>(false);
   const [streamRefreshCount, setStreamRefreshCount] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
-  const [duration, setDuration] = useState<number>(355);
+  const [duration, setDuration] = useState<number>(0);
   const [volume, setVolumeState] = useState<number>(0.85);
   const [isShuffle, setIsShuffle] = useState<boolean>(false);
   const [isRepeat, setIsRepeat] = useState<boolean>(false);
@@ -261,7 +261,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [downloads, setDownloads] = useState<Song[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.DOWNLOADS);
-      const parsed: Song[] = saved ? JSON.parse(saved) : [POPULAR_FEATURED_SONGS[0]];
+      const parsed: Song[] = saved ? JSON.parse(saved) : [];
       return parsed.map((s) => {
         const knownMaster = MusicApi.resolveKnownFullLengthMaster(s);
         const cleanedAudio = knownMaster || (isShortPreviewUrl(s.audioUrl) ? undefined : s.audioUrl);
