@@ -1249,7 +1249,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           streamResolvedAtRef.current = Date.now();
           if (audioRef.current) {
             audioRef.current.pause();
-            audioRef.current.removeAttribute('src');
+            audioRef.current.src = '';
           }
           ytPlayerRef.current.setVolume(Math.round(stateRef.current.volume * 100));
           ytPlayerRef.current.setPlaybackRate(stateRef.current.playbackSpeed);
