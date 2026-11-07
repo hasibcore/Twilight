@@ -714,6 +714,7 @@ class PlayerProvider extends ChangeNotifier {
           targetSong.id,
           preferDownload: true,
           forceRefresh: true,
+          preferCdnFallback: true,
           title: targetSong.title,
           artist: targetSong.artist,
           durationSeconds: targetSong.durationSeconds,

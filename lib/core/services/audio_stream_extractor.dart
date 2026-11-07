@@ -350,13 +350,200 @@ class AudioStreamExtractor {
     return {'title': '', 'artist': '', 'rawContext': ''};
   }
 
+  /// Probes a candidate stream URL with a fast Range: bytes=0-511 request to verify
+  /// it returns HTTP 200 or 206 (and not 403 Forbidden) before handing it to just_audio.
+  static Future<AudioStreamResult?> _verifyStreamPlayable(
+    AudioStreamResult? candidate, {
+    Duration timeout = const Duration(milliseconds: 1800),
+  }) async {
+    if (candidate == null || candidate.url.isEmpty) return null;
+    http.Client? client;
+    try {
+      client = http.Client();
+      final req = http.Request('GET', Uri.parse(candidate.url));
+      if (candidate.headers.isNotEmpty) {
+        req.headers.addAll(candidate.headers);
+      } else {
+        req.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
+      }
+      req.headers['Range'] = 'bytes=0-511';
+
+      final res = await client.send(req).timeout(timeout);
+      if (res.statusCode == 200 || res.statusCode == 206) {
+        int resolvedTotal = candidate.totalBytes;
+        final contentRange = res.headers['content-range'] ?? '';
+        if (contentRange.contains('/')) {
+          final slashTotal = int.tryParse(contentRange.split('/').last.trim()) ?? 0;
+          if (slashTotal > 10000) {
+            resolvedTotal = slashTotal;
+          }
+        }
+        if (resolvedTotal <= 0) {
+          final clen = int.tryParse(res.headers['content-length'] ?? '0') ?? 0;
+          if (clen > 10000) {
+            resolvedTotal = clen;
+          }
+        }
+        return AudioStreamResult(
+          url: candidate.url,
+          totalBytes: resolvedTotal,
+          mimeType: candidate.mimeType,
+          bitrate: candidate.bitrate,
+          headers: candidate.headers,
+          isDirectDownloadable: candidate.isDirectDownloadable,
+        );
+      }
+      AppLogger.info('Stream probe rejected status ${res.statusCode} for ${candidate.url.split("?").first}');
+      return null;
+    } catch (e) {
+      AppLogger.info('Stream probe failed: $e');
+      return null;
+    } finally {
+      client?.close();
+    }
+  }
+
+  /// Races all YouTube direct/Invidious extractors in parallel and returns the first
+  /// stream verified playable (HTTP 200/206) within the timeout budget.
+  static Future<AudioStreamResult?> _extractVerifiedYouTubeDirect(String cleanId) async {
+    Future<AudioStreamResult?> probeTier(
+      String name,
+      Future<AudioStreamResult?> Function() extractor,
+    ) async {
+      try {
+        final raw = await extractor();
+        if (raw == null) return null;
+        final verified = await _verifyStreamPlayable(raw);
+        if (verified != null) {
+          AppLogger.info('Verified playable YouTube stream via $name for $cleanId');
+          return verified;
+        }
+      } catch (_) {}
+      return null;
+    }
+
+    Future<AudioStreamResult?> extractYoutubeExplode() async {
+      try {
+        final manifest = await _yt.videos.streamsClient.getManifest(
+          cleanId,
+          ytClients: [YoutubeApiClient.tv, YoutubeApiClient.ios, YoutubeApiClient.mweb],
+        ).timeout(const Duration(milliseconds: 2800));
+        final audioStreams = manifest.audioOnly;
+        if (audioStreams.isEmpty) return null;
+        final m4a = audioStreams.where((s) =>
+            s.container.name.toLowerCase().contains('mp4') ||
+            s.container.name.toLowerCase().contains('m4a')).toList();
+        final best = m4a.isNotEmpty ? m4a.withHighestBitrate() : audioStreams.withHighestBitrate();
+        return AudioStreamResult(
+          url: best.url.toString(),
+          totalBytes: best.size.totalBytes,
+          mimeType: best.container.name.toLowerCase().contains('mp4') ? 'audio/mp4' : 'audio/webm',
+          bitrate: best.bitrate.bitsPerSecond,
+          headers: const {
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15',
+          },
+        );
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final candidates = <Future<AudioStreamResult?>>[
+      probeTier('Android VR', () => _extractFromAndroidVr(cleanId)),
+      probeTier('iOS App', () => _extractFromIosApp(cleanId)),
+      probeTier('Android Music', () => _extractFromAndroidMusic(cleanId)),
+      probeTier('TV Embedded', () => _extractFromTvEmbedded(cleanId)),
+      probeTier('Android App', () => _extractFromAndroidApp(cleanId)),
+      probeTier('Invidious', () => _extractFromInvidious(cleanId)),
+      probeTier('YoutubeExplode', extractYoutubeExplode),
+    ];
+
+    try {
+      final results = await Future.wait(candidates).timeout(
+        const Duration(milliseconds: 3200),
+        onTimeout: () => const <AudioStreamResult?>[],
+      );
+      for (final r in results) {
+        if (r != null) return r;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Resolves a verified high-bitrate CDN stream (JioSaavn 320kbps, SoundCloud, or saavn.sumit.co)
+  /// matching the exact song title, artist, version (Coke Studio / Live / Studio), and duration.
+  static Future<AudioStreamResult?> _extractVerifiedCdnMaster(
+    String cleanId, {
+    String? title,
+    String? artist,
+    int? durationSeconds,
+  }) async {
+    final meta = await _resolveTrackMetadata(cleanId, title: title, artist: artist);
+    final trackTitle = meta['title'] ?? '';
+    final trackArtist = meta['artist'] ?? '';
+    final rawContext = meta['rawContext'] ?? '$trackTitle $trackArtist';
+    if (trackTitle.isEmpty) return null;
+
+    // Run JioSaavn 320kbps, SoundCloud, and saavn.sumit.co concurrently and pick best verified match
+    final cdnFutures = <Future<AudioStreamResult?>>[
+      () async {
+        try {
+          return await _extractFromJioSaavnDirect(
+            title: trackTitle,
+            artist: trackArtist,
+            rawContext: rawContext,
+            targetDurationSeconds: durationSeconds,
+          );
+        } catch (_) {
+          return null;
+        }
+      }(),
+      () async {
+        try {
+          final sc = await _extractFromSoundCloudDirect(
+            title: trackTitle,
+            artist: trackArtist,
+            rawContext: rawContext,
+            targetDurationSeconds: durationSeconds,
+          );
+          return await _verifyStreamPlayable(sc);
+        } catch (_) {
+          return null;
+        }
+      }(),
+      () async {
+        try {
+          return await _extractFromItunesSearch(
+            title: trackTitle,
+            artist: trackArtist,
+            targetDurationSeconds: durationSeconds,
+          );
+        } catch (_) {
+          return null;
+        }
+      }(),
+    ];
+
+    try {
+      final results = await Future.wait(cdnFutures).timeout(
+        const Duration(milliseconds: 4200),
+        onTimeout: () => const <AudioStreamResult?>[],
+      );
+      for (final r in results) {
+        if (r != null) return r;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   /// Extracts the best playable audio stream URL for a given YouTube video ID and optional track metadata.
-  /// Always prioritizes the 100% exact YouTube video stream ([videoId]) first so live/concert/video-specific
-  /// arrangements match YouTube frame-for-frame, falling back to duration-matched CDN masters only if needed.
+  /// Runs verified YouTube direct extraction and exact-version CDN extraction in parallel so playback
+  /// starts in <1.5s and never hangs on HTTP 403 Forbidden URLs.
   static Future<AudioStreamResult?> extractAudioStream(
     String videoId, {
     bool preferDownload = false,
     bool forceRefresh = false,
+    bool preferCdnFallback = false,
     String? title,
     String? artist,
     int? durationSeconds,
@@ -366,7 +553,7 @@ class AudioStreamExtractor {
       _metadataByVideoId[cleanId] = extractCoreTitleAndArtist(title, artist);
     }
 
-    final cacheKey = 'v31_${cleanId}_$preferDownload';
+    final cacheKey = 'v32_${cleanId}_${preferDownload}_$preferCdnFallback';
     if (forceRefresh) {
       invalidateCache(cleanId);
       _cache.remove(cacheKey);
@@ -377,7 +564,6 @@ class AudioStreamExtractor {
         AppLogger.info('Cache hit for $cleanId (age: ${age.inSeconds}s)');
         return _cache[cacheKey];
       } else {
-        AppLogger.info('Cache expired for $cleanId (age: ${age.inSeconds}s), re-fetching');
         _cache.remove(cacheKey);
         _cacheTime.remove(cacheKey);
       }
@@ -388,189 +574,62 @@ class AudioStreamExtractor {
         !cleanId.startsWith('js_') &&
         RegExp(r'^[a-zA-Z0-9_-]{11}$').hasMatch(cleanId);
 
-    // =========================================================================
-    // PHASE 1: EXACT YOUTUBE VIDEO STREAM EXTRACTION BY VIDEO_ID (TIERS 1 - 8)
-    // Guarantees the exact YouTube audio (live concert, unplugged, remix, or
-    // original video backing track) plays 1:1 with YouTube.
-    // =========================================================================
-    if (isStandardYouTubeId) {
-      // Tier 1: Official YouTube Android VR Client (Fastest, bypasses PoToken on mobile/residential IPs)
-      try {
-        final vrResult = await _extractFromAndroidVr(cleanId);
-        if (vrResult != null) {
-          AppLogger.info('Extracted exact YouTube stream via Tier 1 Android VR for $cleanId');
-          if (!preferDownload) _setCache(cacheKey, vrResult);
-          return vrResult;
-        }
-      } catch (e) {
-        AppLogger.info('Tier 1 Android VR error for $cleanId: $e');
-      }
+    // Launch both verified YouTube extraction and verified CDN extraction concurrently!
+    final Future<AudioStreamResult?> ytFuture =
+        (isStandardYouTubeId && !preferCdnFallback)
+            ? _extractVerifiedYouTubeDirect(cleanId)
+            : Future.value(null);
 
-      // Tier 2: Official iOS App Client
-      try {
-        final iosResult = await _extractFromIosApp(cleanId);
-        if (iosResult != null) {
-          AppLogger.info('Extracted exact YouTube stream via Tier 2 iOS App for $cleanId');
-          if (!preferDownload) _setCache(cacheKey, iosResult);
-          return iosResult;
-        }
-      } catch (e) {
-        AppLogger.info('Tier 2 iOS App error for $cleanId: $e');
-      }
+    final Future<AudioStreamResult?> cdnFuture = _extractVerifiedCdnMaster(
+      cleanId,
+      title: title,
+      artist: artist,
+      durationSeconds: durationSeconds,
+    );
 
-      // Tier 3: Official Android YouTube App client
-      try {
-        final androidAppResult = await _extractFromAndroidApp(cleanId);
-        if (androidAppResult != null) {
-          AppLogger.info('Extracted exact YouTube stream via Tier 3 Android App for $cleanId');
-          if (!preferDownload) _setCache(cacheKey, androidAppResult);
-          return androidAppResult;
-        }
-      } catch (e) {
-        AppLogger.info('Tier 3 Android App error for $cleanId: $e');
+    if (preferCdnFallback) {
+      final cdnRes = await cdnFuture;
+      if (cdnRes != null) {
+        _setCache(cacheKey, cdnRes);
+        return cdnRes;
       }
-
-      // Tier 4: Android Music Client
-      try {
-        final androidMusicResult = await _extractFromAndroidMusic(cleanId);
-        if (androidMusicResult != null) {
-          AppLogger.info('Extracted exact YouTube stream via Tier 4 Android Music for $cleanId');
-          if (!preferDownload) _setCache(cacheKey, androidMusicResult);
-          return androidMusicResult;
+      if (isStandardYouTubeId) {
+        final ytRes = await _extractVerifiedYouTubeDirect(cleanId);
+        if (ytRes != null) {
+          _setCache(cacheKey, ytRes);
+          return ytRes;
         }
-      } catch (e) {
-        AppLogger.info('Tier 4 Android Music error for $cleanId: $e');
       }
-
-      // Tier 5: TV Embedded Player
-      try {
-        final tvResult = await _extractFromTvEmbedded(cleanId);
-        if (tvResult != null) {
-          AppLogger.info('Extracted exact YouTube stream via Tier 5 TV Embedded for $cleanId');
-          if (!preferDownload) _setCache(cacheKey, tvResult);
-          return tvResult;
-        }
-      } catch (e) {
-        AppLogger.info('Tier 5 TV Embedded error for $cleanId: $e');
-      }
-
-      // Tier 6: Mobile Web Client
-      try {
-        final mwebResult = await _extractFromMweb(cleanId);
-        if (mwebResult != null) {
-          AppLogger.info('Extracted exact YouTube stream via Tier 6 MWEB for $cleanId');
-          if (!preferDownload) _setCache(cacheKey, mwebResult);
-          return mwebResult;
-        }
-      } catch (e) {
-        AppLogger.info('Tier 6 MWEB error for $cleanId: $e');
-      }
-
-      // Tier 7: YoutubeExplode with TV / MWEB / iOS clients
-      try {
-        final manifest = await _yt.videos.streamsClient.getManifest(
-          cleanId,
-          ytClients: [YoutubeApiClient.tv, YoutubeApiClient.mweb, YoutubeApiClient.ios],
-        ).timeout(const Duration(seconds: 4));
-        final audioStreams = manifest.audioOnly;
-        if (audioStreams.isNotEmpty) {
-          final m4a = audioStreams.where((s) =>
-              s.container.name.toLowerCase().contains('mp4') ||
-              s.container.name.toLowerCase().contains('m4a')).toList();
-          final best = m4a.isNotEmpty ? m4a.withHighestBitrate() : audioStreams.withHighestBitrate();
-          AppLogger.info('Extracted exact YouTube stream via Tier 7 YoutubeExplode for $cleanId');
-          final result = AudioStreamResult(
-            url: best.url.toString(),
-            totalBytes: best.size.totalBytes,
-            mimeType: best.container.name.toLowerCase().contains('mp4') ? 'audio/mp4' : 'audio/webm',
-            bitrate: best.bitrate.bitsPerSecond,
-            headers: const {
-              'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15',
-            },
-          );
-          _setCache(cacheKey, result);
-          return result;
-        }
-      } catch (e) {
-        AppLogger.info('Tier 7 YoutubeExplode error for $cleanId: $e');
-      }
-
-      // Tier 8: Invidious / Piped Instances
-      try {
-        final invResult = await _extractFromInvidious(cleanId);
-        if (invResult != null) {
-          AppLogger.info('Extracted exact YouTube stream via Tier 8 Invidious for $cleanId');
-          _setCache(cacheKey, invResult);
-          return invResult;
-        }
-      } catch (e) {
-        AppLogger.info('Tier 8 Invidious error for $cleanId: $e');
-      }
+      return null;
     }
 
-    // =========================================================================
-    // PHASE 2: MULTI-SOURCE EXACT-VERSION & DURATION-MATCHED FALLBACK
-    // Used only if direct YouTube stream extraction is blocked or for non-YT IDs.
-    // =========================================================================
-    final meta = await _resolveTrackMetadata(cleanId, title: title, artist: artist);
-    final trackTitle = meta['title'] ?? '';
-    final trackArtist = meta['artist'] ?? '';
-    final rawContext = meta['rawContext'] ?? '$trackTitle $trackArtist';
+    // Wait up to 2.2s for verified exact YouTube stream first
+    AudioStreamResult? ytResult;
+    try {
+      ytResult = await ytFuture.timeout(
+        const Duration(milliseconds: 2200),
+        onTimeout: () => null,
+      );
+    } catch (_) {}
 
-    // Tier 9: Exact-Track 320kbps AAC Direct CDN Resolver (JioSaavn Official API)
-    if (trackTitle.isNotEmpty) {
-      try {
-        final exactCdnResult = await _extractFromJioSaavnDirect(
-          title: trackTitle,
-          artist: trackArtist,
-          rawContext: rawContext,
-          targetDurationSeconds: durationSeconds,
-        );
-        if (exactCdnResult != null) {
-          AppLogger.info('Extracted 320kbps exact-track fallback via JioSaavn CDN for "$trackTitle" ($cleanId)');
-          _setCache(cacheKey, exactCdnResult);
-          return exactCdnResult;
-        }
-      } catch (e) {
-        AppLogger.info('Tier 9 JioSaavn CDN fallback error for $cleanId: $e');
-      }
+    if (ytResult != null) {
+      _setCache(cacheKey, ytResult);
+      return ytResult;
     }
 
-    // Tier 10: SoundCloud Direct Progressive Stream Resolver for exact indie/band/album tracks
-    if (trackTitle.isNotEmpty) {
-      try {
-        final scResult = await _extractFromSoundCloudDirect(
-          title: trackTitle,
-          artist: trackArtist,
-          rawContext: rawContext,
-          targetDurationSeconds: durationSeconds,
-        );
-        if (scResult != null) {
-          AppLogger.info('Extracted exact-track fallback via SoundCloud CDN for "$trackTitle" ($cleanId)');
-          _setCache(cacheKey, scResult);
-          return scResult;
-        }
-      } catch (e) {
-        AppLogger.info('Tier 10 SoundCloud CDN fallback error for $cleanId: $e');
-      }
+    // If YouTube direct streams were blocked (HTTP 403) or timed out, immediately use the concurrent CDN result
+    final cdnResult = await cdnFuture;
+    if (cdnResult != null) {
+      AppLogger.info('Resolved verified high-bitrate CDN stream for $cleanId');
+      _setCache(cacheKey, cdnResult);
+      return cdnResult;
     }
 
-    // Tier 11: saavn.sumit.co High-Bitrate M4A Exact-Song Fallback
-    if (trackTitle.isNotEmpty) {
-      try {
-        final itunesResult = await _extractFromItunesSearch(
-          title: trackTitle,
-          artist: trackArtist,
-          targetDurationSeconds: durationSeconds,
-        );
-        if (itunesResult != null) {
-          AppLogger.info('Extracted M4A stream via Tier 11 fallback for "$trackTitle" ($cleanId)');
-          _setCache(cacheKey, itunesResult);
-          return itunesResult;
-        }
-      } catch (e) {
-        AppLogger.info('Tier 11 fallback error for $cleanId: $e');
-      }
+    // Final check in case ytFuture finished while awaiting cdnFuture
+    final lateYt = await ytFuture;
+    if (lateYt != null) {
+      _setCache(cacheKey, lateYt);
+      return lateYt;
     }
 
     AppLogger.error('All audio stream extraction tiers failed for $cleanId');

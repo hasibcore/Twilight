@@ -32,6 +32,8 @@ import 'presentation/providers/playlist_provider.dart';
 import 'presentation/providers/search_provider.dart';
 import 'presentation/providers/theme_provider.dart';
 import 'presentation/screens/main_navigation_screen.dart';
+import 'presentation/widgets/app_logo.dart';
+import 'core/constants/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,7 +67,7 @@ void main() async {
             androidShowNotificationBadge: true,
             // Strictly monochrome white-on-transparent vector status bar icon
             androidNotificationIcon: 'drawable/ic_stat_music',
-            notificationColor: const Color(0xFF6C63FF),
+            notificationColor: const Color(0xFF6366F1),
             preloadArtwork: true,
           );
           AppLogger.info('JustAudioBackground initialized successfully');
@@ -142,7 +144,80 @@ class TwilightApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
       onGenerateRoute: AppRouter.onGenerateRoute,
-      home: const MainNavigationScreen(),
+      home: const _TwilightSplashGate(),
+    );
+  }
+}
+
+class _TwilightSplashGate extends StatefulWidget {
+  const _TwilightSplashGate();
+
+  @override
+  State<_TwilightSplashGate> createState() => _TwilightSplashGateState();
+}
+
+class _TwilightSplashGateState extends State<_TwilightSplashGate> {
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final isTest = !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+    if (isTest) {
+      _showSplash = false;
+    } else {
+      Future.delayed(const Duration(milliseconds: 900), () {
+        if (mounted) {
+          setState(() => _showSplash = false);
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        const MainNavigationScreen(),
+        if (_showSplash)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Container(
+                color: AppColors.backgroundDark,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const AppLogo(size: 88, showText: false),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Twilight',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.6,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'MUSIC STREAMING',
+                        style: TextStyle(
+                          color: Color(0xFF818CF8),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 3.2,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -203,14 +203,15 @@ class YouTubeAudioSource extends StreamAudioSource {
             // If the connection closed without reaching targetEnd, loop and reconnect from currentPos!
             AppLogger.info('Stream socket finished at byte $currentPos of $targetEnd, auto-reconnecting...');
           } else if (response.statusCode == 403 || response.statusCode == 410) {
-            // Stream URL expired or rate limited. Refresh it!
-            AppLogger.warning('Stream URL status ${response.statusCode} at $currentPos. Refreshing stream...');
+            // Stream URL expired or rate limited. Switch to verified CDN fallback immediately!
+            AppLogger.warning('Stream URL status ${response.statusCode} at $currentPos. Switching to verified stream...');
             final cleanId = _mediaItem.id.trim();
             if (cleanId.isNotEmpty) {
               AudioStreamExtractor.invalidateCache(cleanId);
               final fresh = await AudioStreamExtractor.extractAudioStream(
                 cleanId,
                 forceRefresh: true,
+                preferCdnFallback: true,
                 title: _mediaItem.title,
                 artist: _mediaItem.artist,
               );
@@ -435,6 +436,14 @@ class YouTubeAudioSource extends StreamAudioSource {
     final mediaItem = buildMediaItem(artUri);
 
     if (streamResult != null) {
+      if (streamResult.isDirectDownloadable || !streamResult.url.contains('googlevideo.com')) {
+        AppLogger.info('Streaming "${song.title}" via direct native AudioSource.uri (${streamResult.mimeType}, ${streamResult.bitrate}bps)');
+        return AudioSource.uri(
+          Uri.parse(streamResult.url),
+          headers: streamResult.headers,
+          tag: mediaItem,
+        );
+      }
       AppLogger.info('Streaming "${song.title}" via YouTubeAudioSource proxy (${streamResult.mimeType}, ${streamResult.bitrate}bps)');
       final isMp4 = streamResult.mimeType.toLowerCase().contains('mp4') ||
           streamResult.mimeType.toLowerCase().contains('m4a');

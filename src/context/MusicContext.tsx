@@ -1144,17 +1144,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
 
         if (
-          !loadedFromOfflineStorage &&
-          resolvedAudioUrl.startsWith('/api/stream/') &&
-          !abortController.signal.aborted
-        ) {
-          const directUrl = await MusicApi.resolveClientDirectStreamUrl(normalizedSong);
-          if (directUrl && !abortController.signal.aborted) {
-            resolvedAudioUrl = directUrl;
-          }
-        }
-
-        if (
           !audioRef.current ||
           reqId !== playRequestIdRef.current ||
           abortController.signal.aborted ||
@@ -1238,66 +1227,56 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const hasLocalExactFile = Boolean(
         normalizedSong.audioUrl && normalizedSong.audioUrl.startsWith('/audio/')
       );
+      const wantsLiveOrConcertVideo =
+        /\b(?:concert|live|anniversary|unplugged)\b/i.test(
+          `${normalizedSong.title} ${normalizedSong.artist}`
+        );
 
-      // Primary Engine for YouTube videos: Official YouTube IFrame Player API
-      // Plays the 100% exact YouTube video audio (live concerts, unplugged, specific uploads, etc.)
-      if (!loadedFromOfflineStorage && isStandardYouTubeId && !hasLocalExactFile && !document.hidden) {
-        if (!ytReadyRef.current) {
-          await new Promise<void>((resolve) => {
-            let checks = 0;
-            const timer = setInterval(() => {
-              checks += 1;
-              if (ytReadyRef.current || checks >= 10 || abortController.signal.aborted) {
-                clearInterval(timer);
-                resolve();
-              }
-            }, 100);
-          });
-        }
-
-        if (
-          ytReadyRef.current &&
-          ytPlayerRef.current &&
-          reqId === playRequestIdRef.current &&
-          !abortController.signal.aborted &&
-          !intentionalPauseRef.current
-        ) {
-          try {
-            activeEngineRef.current = 'yt';
-            hasInitializedStreamRef.current = true;
-            streamResolvedAtRef.current = Date.now();
-            if (audioRef.current) {
-              audioRef.current.pause();
-              audioRef.current.removeAttribute('src');
-            }
-            ytPlayerRef.current.setVolume(Math.round(stateRef.current.volume * 100));
-            ytPlayerRef.current.setPlaybackRate(stateRef.current.playbackSpeed);
-            ytPlayerRef.current.loadVideoById({
-              videoId: cleanId,
-              startSeconds: 0,
-            });
-            ytPlayerRef.current.playVideo();
-
-            // 3.5-second watchdog: if YouTube embed is restricted or blocked, seamlessly fall back to HTML5 <audio>
-            if (ytFallbackWatchdogRef.current) clearTimeout(ytFallbackWatchdogRef.current);
-            ytFallbackWatchdogRef.current = setTimeout(() => {
-              ytFallbackWatchdogRef.current = null;
-              if (
-                reqId !== playRequestIdRef.current ||
-                activeEngineRef.current !== 'yt' ||
-                intentionalPauseRef.current
-              ) {
-                return;
-              }
-              const pState = ytPlayerRef.current?.getPlayerState?.();
-              if (pState !== 1) {
-                startHtml5StreamPlayback(0);
-              }
-            }, 3500);
-            return;
-          } catch {
-            // Fall through to HTML5 stream playback
+      // Use YouTube IFrame Player API specifically for live/concert/unplugged video uploads when tab is visible,
+      // with a fast 1.8s fallback to HTML5 <audio>. All standard tracks start immediately on HTML5 <audio>.
+      if (
+        !loadedFromOfflineStorage &&
+        isStandardYouTubeId &&
+        wantsLiveOrConcertVideo &&
+        !hasLocalExactFile &&
+        !document.hidden &&
+        ytReadyRef.current &&
+        ytPlayerRef.current
+      ) {
+        try {
+          activeEngineRef.current = 'yt';
+          hasInitializedStreamRef.current = true;
+          streamResolvedAtRef.current = Date.now();
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.removeAttribute('src');
           }
+          ytPlayerRef.current.setVolume(Math.round(stateRef.current.volume * 100));
+          ytPlayerRef.current.setPlaybackRate(stateRef.current.playbackSpeed);
+          ytPlayerRef.current.loadVideoById({
+            videoId: cleanId,
+            startSeconds: 0,
+          });
+          ytPlayerRef.current.playVideo();
+
+          if (ytFallbackWatchdogRef.current) clearTimeout(ytFallbackWatchdogRef.current);
+          ytFallbackWatchdogRef.current = setTimeout(() => {
+            ytFallbackWatchdogRef.current = null;
+            if (
+              reqId !== playRequestIdRef.current ||
+              activeEngineRef.current !== 'yt' ||
+              intentionalPauseRef.current
+            ) {
+              return;
+            }
+            const pState = ytPlayerRef.current?.getPlayerState?.();
+            if (pState !== 1) {
+              startHtml5StreamPlayback(0);
+            }
+          }, 1800);
+          return;
+        } catch {
+          // Fall through to HTML5 stream playback
         }
       }
 
