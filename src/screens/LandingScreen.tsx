@@ -34,9 +34,9 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
   });
   const [driveResult, setDriveResult] = useState<DriveUploadResult | null>(null);
 
-  // GitHub v2.4.0 Release Publisher Modal State
+  // GitHub v3.0.0 Release Publisher Modal State
   const [showGithubModal, setShowGithubModal] = useState(false);
-  const [githubRepo, setGithubRepo] = useState('hasibcore/Twilight');
+  const [githubRepo, setGithubRepo] = useState('hasibcore/Twilight-Music');
   const [githubToken, setGithubToken] = useState('');
   const [isPublishingGithub, setIsPublishingGithub] = useState(false);
   const [githubResult, setGithubResult] = useState<{
@@ -73,7 +73,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
         body: JSON.stringify({
           repo: githubRepo,
           token: githubToken,
-          tagName: 'v2.4.0',
+          tagName: 'v3.0.0',
         }),
       });
       const data = await res.json();
@@ -157,7 +157,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
 
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold">
           <Zap className="w-3.5 h-3.5" />
-          <span>Release v2.4.0 • Production Bug-Fix &amp; AI Studio UI Sync</span>
+          <span>Release v3.0.0 • Official Android APK, iOS IPA &amp; Windows PC Release</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
@@ -168,7 +168,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
         </h1>
 
         <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto leading-relaxed">
-          Twilight v2.4.0 synchronizes the AI Studio Web UI and Flutter Android APK widgets, and resolves all 7 production streaming, pause/resume, background lock-screen, notification icon, and offline download bugs.
+          Twilight Music v3.0.0 delivers 100% exact YouTube video audio matching (including live concerts &amp; unplugged sessions), clean click-to-play startup, background lockscreen playback, and native builds for Android, iOS, and Windows PC.
         </p>
 
         {/* Visualizer Canvas */}
@@ -187,39 +187,39 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
                 <Smartphone className="w-6 h-6" />
               </div>
               <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-extrabold uppercase tracking-wider">
-                v2.4.0 Sync
+                v3.0.0 APK
               </span>
             </div>
-            <h3 className="text-lg font-bold text-white">Android</h3>
+            <h3 className="text-lg font-bold text-white">Android (APK)</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Native APK with synced AI Studio UI, monochrome status-bar notification icon, 3-min pause refresh &amp; verified offline playback.
+              Native Android 7.0+ APK with exact YouTube videoId streaming, background lockscreen controls &amp; offline downloads.
             </p>
           </div>
 
           <div className="flex flex-col gap-2">
-            <button
-              onClick={() => ( onNavigate ? onNavigate('home') : (window.location.href = '/') )}
+            <a
+              href="https://github.com/hasibcore/Twilight-Music/releases/download/v3.0.0/Twilight-Android-v3.0.0.apk"
+              download="Twilight-Android-v3.0.0.apk"
               className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all text-center cursor-pointer"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>Install v2.4.0 App Instantly (PWA)</span>
-            </button>
-            <a
-              href="/api/release/project-archive"
-              download="Twilight-Music-v2.4.0-Full-Project.tar.gz"
+              <Download className="w-4 h-4" />
+              <span>Download Android APK (v3.0.0)</span>
+            </a>
+            <button
+              onClick={() => (onNavigate ? onNavigate('home') : (window.location.href = '/'))}
               className="w-full py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 border border-slate-700/60 transition-all text-center cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Download v2.4.0 Source + APK Workflow</span>
-            </a>
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Open Web / PWA Player</span>
+            </button>
             <a
-              href="https://github.com/hasibcore/Twilight/releases"
+              href="https://github.com/hasibcore/Twilight-Music/releases/tag/v3.0.0"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-2 rounded-2xl text-slate-400 hover:text-slate-200 font-medium text-[11px] flex items-center justify-center gap-1.5 transition-colors"
+              className="w-full py-1.5 rounded-2xl text-slate-400 hover:text-slate-200 font-medium text-[11px] flex items-center justify-center gap-1.5 transition-colors"
             >
               <ExternalLink className="w-3 h-3" />
-              <span>View GitHub Releases (hasibcore/Twilight)</span>
+              <span>View on GitHub Releases</span>
             </a>
           </div>
         </div>
@@ -227,23 +227,37 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
         {/* Windows Card */}
         <div className="p-6 rounded-3xl bg-slate-900/80 border border-indigo-500/30 shadow-xl flex flex-col justify-between space-y-6 hover:-translate-y-1 transition-transform">
           <div className="space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
-              <Monitor className="w-6 h-6" />
+            <div className="flex items-center justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                <Monitor className="w-6 h-6" />
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[10px] font-extrabold uppercase tracking-wider">
+                v3.0.0 x64
+              </span>
             </div>
             <h3 className="text-lg font-bold text-white">Windows PC</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Desktop edition with global media keys support, single authoritative audio session &amp; instant local cache.
+              Portable Windows 10/11 (64-bit) desktop build (`Twilight.exe`) with native high-bitrate audio engine &amp; local cache.
             </p>
           </div>
 
           <div className="flex flex-col gap-2">
             <a
-              href="https://github.com/hasibcore/Twilight/releases/download/v1.0.1/Twilight-Windows-x64-v1.0.1.zip"
-              download="Twilight-Windows-x64-v1.0.1.zip"
+              href="https://github.com/hasibcore/Twilight-Music/releases/download/v3.0.0/Twilight-Windows-x64-v3.0.0.zip"
+              download="Twilight-Windows-x64-v3.0.0.zip"
               className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition-all text-center"
             >
               <Download className="w-4 h-4" />
-              <span>Download for Windows (x64)</span>
+              <span>Download Windows x64 (.zip)</span>
+            </a>
+            <a
+              href="https://github.com/hasibcore/Twilight-Music/releases/tag/v3.0.0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-1.5 rounded-2xl text-slate-400 hover:text-slate-200 font-medium text-[11px] flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+              <span>View Windows Release Notes</span>
             </a>
           </div>
         </div>
@@ -251,38 +265,52 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
         {/* iOS Card */}
         <div className="p-6 rounded-3xl bg-slate-900/80 border border-rose-500/30 shadow-xl flex flex-col justify-between space-y-6 hover:-translate-y-1 transition-transform">
           <div className="space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
-              <Apple className="w-6 h-6" />
+            <div className="flex items-center justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                <Apple className="w-6 h-6" />
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[10px] font-extrabold uppercase tracking-wider">
+                v3.0.0 IPA
+              </span>
             </div>
             <h3 className="text-lg font-bold text-white">Apple iOS</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              IPA package for AltStore / Sideloadly or installable progressive web application.
+              Unsigned iOS IPA package (`Twilight-iOS-v3.0.0.ipa`) for AltStore, Sideloadly, Scarlet, or TrollStore.
             </p>
           </div>
 
           <div className="flex flex-col gap-2">
             <a
-              href="https://github.com/hasibcore/Twilight/releases/download/v1.0.1/Twilight-iOS-v1.0.1.ipa"
-              download="Twilight-iOS-v1.0.1.ipa"
+              href="https://github.com/hasibcore/Twilight-Music/releases/download/v3.0.0/Twilight-iOS-v3.0.0.ipa"
+              download="Twilight-iOS-v3.0.0.ipa"
               className="w-full py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 transition-all text-center"
             >
               <Download className="w-4 h-4" />
-              <span>Download for iOS (IPA)</span>
+              <span>Download iOS Package (.ipa)</span>
+            </a>
+            <a
+              href="https://github.com/hasibcore/Twilight-Music/releases/tag/v3.0.0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-1.5 rounded-2xl text-slate-400 hover:text-slate-200 font-medium text-[11px] flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+              <span>View iOS Release Notes</span>
             </a>
           </div>
         </div>
       </div>
 
-      {/* GitHub & Google Drive Whole Project v2.4.0 Package Card */}
+      {/* GitHub & Google Drive Whole Project v3.0.0 Package Card */}
       <div className="p-6 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/60 to-slate-900 border border-indigo-500/30 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-2 text-center md:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-bold">
             <ShieldCheck className="w-4 h-4" />
-            <span>Live AI Studio Codebase • v2.4.0 Production Release</span>
+            <span>Live Multi-Platform Codebase • v3.0.0 Production Release</span>
           </div>
-          <h3 className="text-xl font-bold text-white">Export v2.4.0 Release to GitHub &amp; Google Drive</h3>
+          <h3 className="text-xl font-bold text-white">Export v3.0.0 Release to GitHub &amp; Google Drive</h3>
           <p className="text-xs text-slate-400 max-w-xl">
-            Download the live <strong>Twilight Music v2.4.0</strong> release archive containing the synced Flutter + React UI, all 7 audio &amp; offline bug fixes, and <code>.github/workflows/build-apk.yml</code>, or publish directly to GitHub Releases.
+            Download the live <strong>Twilight Music v3.0.0</strong> full project archive containing the Android, iOS, Windows &amp; React Web codebases plus <code>.github/workflows/build-apk.yml</code>, or publish directly to GitHub Releases.
           </p>
         </div>
 
@@ -295,16 +323,16 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
             className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <GitBranch className="w-4 h-4" />
-            <span>Publish v2.4.0 to GitHub</span>
+            <span>Publish v3.0.0 to GitHub</span>
           </button>
 
           <a
             href="/api/release/project-archive"
-            download="Twilight-Music-v2.4.0-Full-Project.tar.gz"
+            download="Twilight-Music-v3.0.0-Full-Project.tar.gz"
             className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all"
           >
             <Download className="w-4 h-4" />
-            <span>Download v2.4.0 Project Archive</span>
+            <span>Download v3.0.0 Project Archive</span>
           </a>
 
           <button
@@ -320,7 +348,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
             ) : (
               <>
                 <CloudUpload className="w-4 h-4" />
-                <span>Save v2.4.0 to Google Drive</span>
+                <span>Save v3.0.0 to Google Drive</span>
               </>
             )}
           </button>
@@ -345,12 +373,12 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
             <div>
               <p className="font-bold text-sm">
                 {githubResult.success
-                  ? `Pushed Full App & Published Twilight Music v2.4.0 to GitHub${githubResult.commitSha ? ` (commit ${githubResult.commitSha})` : ''}!`
+                  ? `Pushed Full App & Published Twilight Music v3.0.0 to GitHub${githubResult.commitSha ? ` (commit ${githubResult.commitSha})` : ''}!`
                   : 'GitHub Release publish status'}
               </p>
               <p className="text-slate-300 mt-1">
                 {githubResult.success
-                  ? 'Pushed full repository to main, tagged v2.4.0, uploaded Twilight-Music-v2.4.0-Full-Project.tar.gz to your GitHub Release, and triggered the GitHub Actions APK build.'
+                  ? 'Pushed full repository to main, tagged v3.0.0, and triggered GitHub Actions builds for Android APK, iOS IPA, and Windows x64 ZIP.'
                   : githubResult.error}
               </p>
             </div>
@@ -388,7 +416,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
             <div>
               <p className="font-bold text-sm">
                 {driveResult.success
-                  ? 'Successfully saved v2.4.0 to Google Drive!'
+                  ? 'Successfully saved v3.0.0 to Google Drive!'
                   : 'Google Drive upload failed'}
               </p>
               <p className="text-slate-300 mt-1">
@@ -413,7 +441,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* What's Fixed in v2.4.0 Production Release Summary */}
+      {/* What's Fixed in v3.0.0 Production Release Summary */}
       <div className="p-6 rounded-3xl bg-slate-900/70 border border-white/10 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2.5">
@@ -422,47 +450,47 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
             </span>
             <div>
               <h3 className="text-sm sm:text-base font-bold text-white">
-                v2.4.0 Production Bug-Fix &amp; UI Parity Changelog
+                v3.0.0 Multi-Platform Release &amp; Exact YouTube Audio Changelog
               </h3>
               <p className="text-[11px] text-slate-400">
-                Included in the v2.4.0 Project Archive, PWA, and GitHub Actions APK build
+                Included across Android APK, Apple iOS IPA, Windows PC x64 ZIP, and Web Player
               </p>
             </div>
           </div>
           <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-slate-300">
-            version: 2.4.0+24
+            version: 3.0.0+30
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-300">
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
-            <div className="font-bold text-white">1. AI Studio ↔ Flutter APK UI Sync</div>
+            <div className="font-bold text-white">1. 100% Exact YouTube Video Audio (`videoId`)</div>
             <p className="text-[11px] text-slate-400">
-              Synced the MiniPlayer widget (indigo-purple-rose gradient progress bar, live time counter, favorite heart toggle, circular white play/pause button, queue icon) and Home Screen (<code>DYNAMIC TASTE ENGINE</code> greeting + <code>ON HEAVY REPEAT</code> card).
+              Directly streams the selected YouTube video&apos;s exact audio stream first across Android, iOS, Windows, and Web so live concerts, unplugged versions, and remixes always match YouTube.
             </p>
           </div>
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
-            <div className="font-bold text-white">2. Pause/Resume &amp; 3-Min Stream Refresh</div>
+            <div className="font-bold text-white">2. Clean Click-to-Play Startup</div>
             <p className="text-[11px] text-slate-400">
-              Proactively refreshes expired stream URLs after extended pauses (&gt;3 min) while preserving exact seek position and bounded stall recovery.
+              No track is pre-selected or pre-loaded when opening the app; playback and the bottom mini player bar only activate after you click a song.
             </p>
           </div>
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
-            <div className="font-bold text-white">3. Background Playback &amp; Audio Focus</div>
+            <div className="font-bold text-white">3. Native Android, iOS &amp; Windows Builds</div>
             <p className="text-[11px] text-slate-400">
-              Configured Android <code>WAKE_LOCK</code>, <code>FOREGROUND_SERVICE_MEDIA_PLAYBACK</code>, headphone disconnect pause, and phone call ducking/interruption recovery.
+              Automated GitHub Actions CI/CD compiles <code>Twilight-Android-v3.0.0.apk</code>, <code>Twilight-iOS-v3.0.0.ipa</code>, and <code>Twilight-Windows-x64-v3.0.0.zip</code> in parallel.
             </p>
           </div>
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
-            <div className="font-bold text-white">4. Verified Offline Downloads &amp; Notification Icon</div>
+            <div className="font-bold text-white">4. Verified Offline Downloads &amp; Background Audio</div>
             <p className="text-[11px] text-slate-400">
-              Added real local file verification with one-tap Re-download badge for missing files, plus monochrome <code>ic_stat_music.xml</code> vector icon fixing the white notification square.
+              Zero-stall offline caching, monochrome status-bar notification icon, and continuous lockscreen playback.
             </p>
           </div>
         </div>
       </div>
 
-      {/* GitHub v2.4.0 Release Publisher Modal */}
+      {/* GitHub v3.0.0 Release Publisher Modal */}
       {showGithubModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <form
@@ -474,9 +502,9 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
             </div>
 
             <div>
-              <h3 className="font-bold text-white text-lg">Publish v2.4.0 Release to GitHub</h3>
+              <h3 className="font-bold text-white text-lg">Publish v3.0.0 Release to GitHub</h3>
               <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                This will sync <code>.github/workflows/build-apk.yml</code>, create the <strong>v2.4.0</strong> GitHub Release on your repository, and attach the live <code>Twilight-Music-v2.4.0-Full-Project.tar.gz</code> bundle.
+                This will sync <code>.github/workflows/build-apk.yml</code>, create the <strong>v3.0.0</strong> GitHub Release on your repository, and trigger the Android APK, iOS IPA, and Windows x64 builds.
               </p>
             </div>
 
@@ -489,7 +517,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
                   type="text"
                   value={githubRepo}
                   onChange={(e) => setGithubRepo(e.target.value)}
-                  placeholder="hasibcore/Twilight"
+                  placeholder="hasibcore/Twilight-Music"
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white focus:outline-none focus:border-emerald-500"
                 />
@@ -526,10 +554,10 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
                 {isPublishingGithub ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Publishing v2.4.0...</span>
+                    <span>Publishing v3.0.0...</span>
                   </>
                 ) : (
-                  <span>Publish v2.4.0 Release</span>
+                  <span>Publish v3.0.0 Release</span>
                 )}
               </button>
             </div>
@@ -537,7 +565,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Google Drive Upload Confirmation Modal (Mandatory per Workspace Skill guidelines) */}
+      {/* Google Drive Upload Confirmation Modal */}
       {showDriveConfirm && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-white/10 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
@@ -546,14 +574,14 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
             </div>
 
             <div>
-              <h3 className="font-bold text-white text-lg">Save v2.4.0 Release to Google Drive</h3>
+              <h3 className="font-bold text-white text-lg">Save v3.0.0 Release to Google Drive</h3>
               <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                This will save the complete <strong>Twilight Music v2.4.0 Production Release Package</strong> into a dedicated <code>Twilight Music Releases</code> folder in your personal Google Drive.
+                This will save the complete <strong>Twilight Music v3.0.0 Production Release Package</strong> into a dedicated <code>Twilight Music Releases</code> folder in your personal Google Drive.
               </p>
             </div>
 
             <div className="p-3 rounded-2xl bg-white/5 border border-white/5 space-y-1 text-[11px] text-slate-400">
-              <div>• Package: <code>Twilight-Music-v2.4.0-Full-Project.tar.gz</code></div>
+              <div>• Package: <code>Twilight-Music-v3.0.0-Full-Project.tar.gz</code></div>
               <div>• Destination: Google Drive &gt; Twilight Music Releases</div>
               <div>• Permission: Authorized with your Google Account</div>
             </div>
@@ -607,4 +635,3 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onNavigate }) => {
     </div>
   );
 };
-

@@ -12,9 +12,6 @@ dependencies:
   # State Management
   provider: ^6.1.2
   
-  # Official YouTube Player Embed (Compliant iFrame wrapper)
-  youtube_player_flutter: ^9.0.1
-  
   # HTTP & API
   http: ^1.2.1
   

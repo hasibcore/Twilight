@@ -1679,18 +1679,18 @@ function pushFullAppRepositoryToGitHub(cleanRepo: string, ghToken: string, tagNa
 // Release Metadata API Endpoint
 app.get('/api/release/info', (_req: Request, res: Response) => {
   res.json({
-    version: 'v2.4.0',
-    buildNumber: 24,
+    version: 'v3.0.0',
+    buildNumber: 30,
     releaseDate: new Date().toISOString().slice(0, 10),
-    title: 'Twilight Music v2.4.0 — Production Audio & UI Sync Release',
+    title: 'Twilight Music v3.0.0 — Official Android APK, iOS IPA & Windows PC Release',
     highlights: [
-      'UI Parity (AI Studio ↔ Android APK): Synced MiniPlayer widget (gradient progress bar, live time counter, favorite heart button, circular white play/pause control, queue button) & Home Screen (Dynamic Taste Engine greeting + On Heavy Repeat section)',
-      'Verified Full-Length Studio Masters: Added full-length original audio masters & strict remix/karaoke filtering across all tracks',
+      '100% Exact YouTube Video Audio Stream (videoId First): Prioritizes direct YouTube videoId streams across Android, iOS, Windows, and Web so live concerts, unplugged versions, and remixes always match YouTube',
+      'Clean Click-to-Play Startup: Starts with currentSong = null so no track is pre-selected or shown in the player bar until clicked',
+      'Native Multi-Platform Releases: Automated CI/CD builds for Android APK (Twilight-Android-v3.0.0.apk), Apple iOS IPA (Twilight-iOS-v3.0.0.ipa), and Windows x64 ZIP (Twilight-Windows-x64-v3.0.0.zip)',
       'Pause/Resume & Stall Recovery: Proactive stream URL refresh after >3 min pause with exact playback position preservation and bounded retry recovery',
       'Uninterrupted Background Playback: Android WAKE_LOCK + FOREGROUND_SERVICE_MEDIA_PLAYBACK permissions, AudioSession interruption/becoming-noisy handlers, and ongoing notification persistence',
-      'Offline Downloads Integrity: Real file verification (existsSync + non-zero byte check), one-tap Re-download badge for missing/corrupted files, and local AudioSource.file playback',
+      'Offline Downloads Integrity: Real file verification, one-tap Re-download badge for missing/corrupted files, and local AudioSource.file playback',
       'Monochrome Notification Icon: Added drawable/ic_stat_music.xml vector icon to fix the white square in Android status bar & notification shade',
-      'Fast Cold & Warm Startup: Parallelized initialization & synchronous Frame-1 home screen cache hydration',
       'Single Authoritative Audio Session: Monotonic playRequestId sequencing to eliminate overlapping audio on rapid track switches',
     ],
   });
@@ -1700,6 +1700,7 @@ app.get('/api/release/info', (_req: Request, res: Response) => {
 app.get(
   [
     '/api/release/project-archive',
+    '/landing/downloads/Twilight-Music-v3.0.0-Full-Project.tar.gz',
     '/landing/downloads/Twilight-Music-v2.4.0-Full-Project.tar.gz',
     '/landing/downloads/Twilight-Music-v1.0.3-Full-Project.zip',
   ],
@@ -1708,7 +1709,7 @@ app.get(
       const archivePath = buildProjectReleaseArchive();
       res.setHeader(
         'Content-Disposition',
-        'attachment; filename="Twilight-Music-v2.4.0-Full-Project.tar.gz"'
+        'attachment; filename="Twilight-Music-v3.0.0-Full-Project.tar.gz"'
       );
       res.setHeader('Content-Type', 'application/gzip');
       res.sendFile(archivePath);
@@ -1720,10 +1721,10 @@ app.get(
   }
 );
 
-// Push Full App Codebase to GitHub & Publish v2.4.0 Release + Upload Archive directly to GitHub Releases
+// Push Full App Codebase to GitHub & Publish v3.0.0 Release + Upload Archive directly to GitHub Releases
 app.post('/api/release/github', async (req: Request, res: Response) => {
   try {
-    const { repo = 'hasibcore/Twilight', token, tagName = 'v2.5.0' } = req.body || {};
+    const { repo = 'hasibcore/Twilight-Music', token, tagName = 'v3.0.0' } = req.body || {};
     const ghToken = (token || process.env.GITHUB_TOKEN || '').trim();
 
     if (!ghToken) {

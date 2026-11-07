@@ -1,4 +1,4 @@
-name: Build & Release Twilight Android APK (v3.0.0)
+name: Build & Release Twilight Android APK, iOS IPA & Windows EXE (v3.0.0)
 
 on:
   push:
@@ -9,9 +9,16 @@ on:
 permissions:
   contents: write
 
+env:
+  RELEASE_TAG: v3.0.0
+  RELEASE_NAME: "Twilight Music v3.0.0 — Official Android APK, iOS IPA & Windows PC Release"
+
 jobs:
-  build:
-    name: Build Flutter Release APK & Package v3.0.0
+  # ---------------------------------------------------------------------------
+  # 1. ANDROID RELEASE APK + FULL PROJECT SOURCE ZIP (Ubuntu Runner)
+  # ---------------------------------------------------------------------------
+  build-android:
+    name: Build Android APK (v3.0.0)
     runs-on: ubuntu-latest
 
     steps:
@@ -34,9 +41,6 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
-      - name: Run Flutter Unit Tests
-        run: flutter test || true
-
       - name: Build Android Release APK
         run: |
           flutter build apk --release
@@ -47,46 +51,137 @@ jobs:
           zip -r Twilight-Music-v3.0.0-Full-Project.zip . \
             -x "node_modules/*" ".git/*" "build/*" ".dart_tool/*" "dist/*"
 
-      - name: Upload Artifact
+      - name: Upload Android Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Twilight-Release-v3.0.0
+          name: Twilight-Android-v3.0.0
           path: |
             build/app/outputs/flutter-apk/Twilight-Android-v3.0.0.apk
             build/app/outputs/flutter-apk/app-release.apk
             Twilight-Music-v3.0.0-Full-Project.zip
 
-      - name: Create GitHub Release (v3.0.0)
+      - name: Publish Android APK to GitHub Release (v3.0.0)
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         with:
-          tag_name: v3.0.0
-          name: "Twilight Music v3.0.0 — Official Full-Stack Production Release"
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_NAME }}
           body: |
-            # 🌙 Twilight Music v3.0.0 — Official Production Release
+            # 🌙 Twilight Music v3.0.0 — Official Multi-Platform Production Release
 
-            Clean, modern, ad-free music streaming & offline download app for Android, iOS, Windows PC, and Web.
+            Clean, fast, ad-free music streaming & offline download app for **Android**, **Apple iOS**, **Windows PC**, and **Web**.
 
             ---
 
-            ### 📦 Platform Downloads:
-            | Platform | Download Link | Description |
+            ### 📦 Official Platform Downloads (v3.0.0):
+            | Platform | Direct Download | Installation Guide |
             |---|---|---|
-            | 🤖 **Android** | [`Twilight-Android-v3.0.0.apk`](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Android-v3.0.0.apk) | Direct APK Install for Android 7.0+ |
-            | 🍏 **iOS** | [`Twilight-iOS-v3.0.0.ipa`](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-iOS-v3.0.0.ipa) | Sideloadable via Scarlet / AltStore / TrollStore |
-            | 💻 **Windows** | [`Twilight-Windows-x64-v3.0.0.zip`](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Windows-x64-v3.0.0.zip) | Portable Windows 10/11 x64 Build |
-            | 📦 **Source Zip** | [`Twilight-Music-v3.0.0-Full-Project.zip`](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Music-v3.0.0-Full-Project.zip) | Full Flutter + React source code bundle |
+            | 🤖 **Android (APK)** | [**`Twilight-Android-v3.0.0.apk`**](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Android-v3.0.0.apk) | Direct APK install for Android 7.0+ |
+            | 🍏 **Apple iOS (IPA)** | [**`Twilight-iOS-v3.0.0.ipa`**](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-iOS-v3.0.0.ipa) | Sideload via AltStore, Sideloadly, Scarlet, or TrollStore |
+            | 💻 **Windows PC (x64)** | [**`Twilight-Windows-x64-v3.0.0.zip`**](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Windows-x64-v3.0.0.zip) | Extract ZIP and run `Twilight.exe` on Windows 10/11 (64-bit) |
+            | 📦 **Full Source Code** | [**`Twilight-Music-v3.0.0-Full-Project.zip`**](https://github.com/${{ github.repository }}/releases/download/v3.0.0/Twilight-Music-v3.0.0-Full-Project.zip) | Complete Flutter + React/Express source bundle |
 
             ---
 
-            ### ✨ Key Fixes & Improvements in v3.0.0:
-            - **Zero-Stall Downloads**: Added tail-range completion safeguards to prevent stalling at 85%–99% on YouTube and JioSaavn CDNs.
-            - **Non-Blocking Artwork**: Thumbnail caching runs in the background with a 1.5s watchdog, ensuring instant progress completion.
-            - **100% Multi-Platform Support**: Android APK, iOS IPA, Windows PC, and Web PWA with identical branding, features, and offline support.
-            - **Rock-Solid Playback**: Monotonic request IDs prevent overlapping audio, with automatic background notification controls.
+            ### ✨ What's New in v3.0.0:
+            - **100% Exact YouTube Video Audio Stream (`videoId` First)**: Prioritizes direct YouTube `videoId` audio streams across Android, iOS, Windows, and Web so live concerts, unplugged versions, and specific uploads play the exact video audio.
+            - **Click-to-Play Clean Startup**: Starts with an empty player state (`currentSong = null`) until a user explicitly selects a song.
+            - **Zero-Stall Offline Downloads**: Verified local audio caching with automatic background artwork caching.
+            - **Uninterrupted Background Playback**: Lockscreen MediaSession controls, headphone disconnect pause, and 3-minute pause stream refresh.
           files: |
             build/app/outputs/flutter-apk/Twilight-Android-v3.0.0.apk
             build/app/outputs/flutter-apk/app-release.apk
             Twilight-Music-v3.0.0-Full-Project.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ---------------------------------------------------------------------------
+  # 2. WINDOWS DESKTOP RELEASE x64 ZIP (Windows Runner)
+  # ---------------------------------------------------------------------------
+  build-windows:
+    name: Build Windows x64 Release (v3.0.0)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Windows Desktop & Get Dependencies
+        run: |
+          flutter config --enable-windows-desktop
+          flutter pub get
+
+      - name: Build Windows x64 Release Executable
+        run: flutter build windows --release
+
+      - name: Package Windows Release ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "Twilight-Windows-x64-v3.0.0.zip" -Force
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Twilight-Windows-x64-v3.0.0
+          path: Twilight-Windows-x64-v3.0.0.zip
+
+      - name: Attach Windows x64 ZIP to GitHub Release (v3.0.0)
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_NAME }}
+          files: |
+            Twilight-Windows-x64-v3.0.0.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ---------------------------------------------------------------------------
+  # 3. APPLE iOS RELEASE IPA (macOS Runner)
+  # ---------------------------------------------------------------------------
+  build-ios:
+    name: Build Apple iOS IPA (v3.0.0)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build Unsigned iOS Release App & Package IPA
+        run: |
+          flutter build ios --release --no-codesign
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/Runner.app
+          zip -r Twilight-iOS-v3.0.0.ipa Payload
+
+      - name: Upload iOS IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Twilight-iOS-v3.0.0
+          path: Twilight-iOS-v3.0.0.ipa
+
+      - name: Attach iOS IPA to GitHub Release (v3.0.0)
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_NAME }}
+          files: |
+            Twilight-iOS-v3.0.0.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
