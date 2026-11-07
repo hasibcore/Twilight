@@ -43,8 +43,12 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
     final currentSongId = context.select<PlayerProvider, String?>((p) => p.currentSong?.id);
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
-        title: const Text('Library'),
+        backgroundColor: AppColors.backgroundDark,
+        surfaceTintColor: Colors.transparent,
+        title: const Text('Library', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.link_rounded),

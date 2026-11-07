@@ -86,6 +86,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final isSuggestionMode = !_hasSubmitted && _controller.text.trim().isNotEmpty;
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundDark,
       // Only render a standalone MiniPlayerWidget when SearchScreen is pushed as an
       // independent route outside MainNavigationScreen; inside MainNavigationScreen,
       // the parent shell already renders the single authoritative MiniPlayerWidget.
@@ -93,6 +94,9 @@ class _SearchScreenState extends State<SearchScreen> {
           ? const SafeArea(top: false, child: MiniPlayerWidget())
           : null,
       appBar: AppBar(
+        backgroundColor: AppColors.backgroundDark,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.white),
         automaticallyImplyLeading: !isInsideMainNav,
         titleSpacing: isInsideMainNav ? 16 : 0,
         title: Container(

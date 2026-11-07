@@ -107,8 +107,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final bottomPadding = hasCurrentSong ? 100.0 : 40.0;
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
-        title: const Text('Explore Music'),
+        backgroundColor: AppColors.backgroundDark,
+        surfaceTintColor: Colors.transparent,
+        title: const Text('Explore Music', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),

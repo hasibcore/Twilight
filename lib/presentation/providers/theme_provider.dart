@@ -23,14 +23,8 @@ class ThemeProvider extends ChangeNotifier {
   bool get wifiOnly => _wifiOnly;
 
   void _loadPreferences() {
-    final mode = LocalStorageService.getString(_keyThemeMode);
-    if (mode == 'light') {
-      _themeMode = ThemeMode.light;
-    } else if (mode == 'system') {
-      _themeMode = ThemeMode.system;
-    } else {
-      _themeMode = ThemeMode.dark;
-    }
+    _themeMode = ThemeMode.dark;
+
 
     _dataSaver = LocalStorageService.getBool(_keyDataSaver) ?? false;
     _autoplay = LocalStorageService.getBool(_keyAutoplay) ?? true;

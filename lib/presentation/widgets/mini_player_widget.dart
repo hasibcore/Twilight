@@ -30,13 +30,10 @@ class MiniPlayerWidget extends StatelessWidget {
       progress = (player.currentPosition.inMilliseconds / player.totalDuration.inMilliseconds).clamp(0.0, 1.0);
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark
-        ? const Color(0xFF0F172A).withValues(alpha: 0.96)
-        : Colors.white.withValues(alpha: 0.96);
+    const bgColor = Color(0xF20F172A); // slate-900 with 0.95 alpha (never white)
     final primaryTextColor = AppColors.textPrimary(context);
     final secondaryTextColor = AppColors.textSecondary(context);
-    final iconColor = isDark ? Colors.white : AppColors.primary;
+    const iconColor = Colors.white;
 
     return GestureDetector(
       onTap: () {

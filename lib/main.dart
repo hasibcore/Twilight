@@ -140,9 +140,9 @@ class TwilightApp extends StatelessWidget {
     return MaterialApp(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.darkTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: themeProvider.themeMode,
+      themeMode: ThemeMode.dark,
       onGenerateRoute: AppRouter.onGenerateRoute,
       home: const _TwilightSplashGate(),
     );

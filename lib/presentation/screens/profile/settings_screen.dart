@@ -18,8 +18,12 @@ class SettingsScreen extends StatelessWidget {
     final dividerColor = Theme.of(context).dividerColor.withValues(alpha: 0.1);
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
-        title: const Text('Settings'),
+        backgroundColor: AppColors.backgroundDark,
+        surfaceTintColor: Colors.transparent,
+        title: const Text('Settings', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: ListView(
         children: [

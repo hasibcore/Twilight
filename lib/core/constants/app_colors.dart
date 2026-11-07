@@ -9,11 +9,11 @@ class AppColors {
   static const Color surfaceVariantDark = Color(0xFF1E293B); // slate-800
   static const Color cardDark = Color(0xFF0F172A); // slate-900
   
-  // Light Theme Palette
-  static const Color backgroundLight = Color(0xFFF8FAFC);
-  static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceVariantLight = Color(0xFFF1F5F9);
-  static const Color cardLight = Color(0xFFFFFFFF);
+  // Twilight Theme Palette (Matching AI Studio Slate-950 & Indigo-600 UI across all modes)
+  static const Color backgroundLight = Color(0xFF020617); // slate-950 (never white)
+  static const Color surfaceLight = Color(0xFF0F172A); // slate-900
+  static const Color surfaceVariantLight = Color(0xFF1E293B); // slate-800
+  static const Color cardLight = Color(0xFF0F172A); // slate-900
 
   // Brand Accents (Indigo / Purple / Rose matching AI Studio Web UI)
   static const Color primary = Color(0xFF4F46E5); // indigo-600
@@ -25,9 +25,9 @@ class AppColors {
   static const Color textSecondaryDark = Color(0xFF94A3B8); // slate-400
   static const Color textTertiaryDark = Color(0xFF64748B); // slate-500
 
-  static const Color textPrimaryLight = Color(0xFF0F172A);
-  static const Color textSecondaryLight = Color(0xFF475569);
-  static const Color textTertiaryLight = Color(0xFF94A3B8);
+  static const Color textPrimaryLight = Color(0xFFF8FAFC);
+  static const Color textSecondaryLight = Color(0xFF94A3B8);
+  static const Color textTertiaryLight = Color(0xFF64748B);
 
   // Status & Actions
   static const Color success = Color(0xFF10B981); // emerald-500
@@ -35,36 +35,26 @@ class AppColors {
   static const Color warning = Color(0xFFF59E0B);
   static const Color info = Color(0xFF6366F1);
 
-  // Theme-aware dynamic helpers
-  static bool isDark(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark;
+  // Theme-aware dynamic helpers (Strictly returns Twilight Midnight Palette)
+  static bool isDark(BuildContext context) => true;
 
-  static Color textPrimary(BuildContext context) =>
-      isDark(context) ? textPrimaryDark : textPrimaryLight;
+  static Color textPrimary(BuildContext context) => textPrimaryDark;
 
-  static Color textSecondary(BuildContext context) =>
-      isDark(context) ? textSecondaryDark : textSecondaryLight;
+  static Color textSecondary(BuildContext context) => textSecondaryDark;
 
-  static Color textTertiary(BuildContext context) =>
-      isDark(context) ? textTertiaryDark : textTertiaryLight;
+  static Color textTertiary(BuildContext context) => textTertiaryDark;
 
-  static Color background(BuildContext context) =>
-      isDark(context) ? backgroundDark : backgroundLight;
+  static Color background(BuildContext context) => backgroundDark;
 
-  static Color surface(BuildContext context) =>
-      isDark(context) ? surfaceDark : surfaceLight;
+  static Color surface(BuildContext context) => surfaceDark;
 
-  static Color surfaceVariant(BuildContext context) =>
-      isDark(context) ? surfaceVariantDark : surfaceVariantLight;
+  static Color surfaceVariant(BuildContext context) => surfaceVariantDark;
 
-  static Color card(BuildContext context) =>
-      isDark(context) ? cardDark : cardLight;
+  static Color card(BuildContext context) => cardDark;
 
-  static Color icon(BuildContext context) =>
-      isDark(context) ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
+  static Color icon(BuildContext context) => const Color(0xFFCBD5E1);
 
-  static Color iconMuted(BuildContext context) =>
-      isDark(context) ? const Color(0xFF64748B) : const Color(0xFF94A3B8);
+  static Color iconMuted(BuildContext context) => const Color(0xFF64748B);
 
   static const LinearGradient playerGradient = LinearGradient(
     begin: Alignment.topCenter,
