@@ -108,31 +108,95 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundDark,
-        surfaceTintColor: Colors.transparent,
-        title: const Text('Explore Music', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            tooltip: 'Search Songs & Artists',
-            onPressed: () {
-              MainNavigationScreen.openSearch(context);
-            },
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(62),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF020617).withValues(alpha: 0.90),
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.white.withValues(alpha: 0.05),
+                width: 1,
+              ),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.link_rounded),
-            tooltip: 'Import Playlist Link',
-            onPressed: _openImportDialog,
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const AppLogo(
+                    size: 38,
+                    showText: true,
+                    subtitle: 'MUSIC',
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.link_rounded, color: Color(0xFFCBD5E1), size: 22),
+                        tooltip: 'Import Playlist Link',
+                        onPressed: _openImportDialog,
+                      ),
+                      GestureDetector(
+                        onTap: () => MainNavigationScreen.switchToTab(context, 4),
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF64748B).withValues(alpha: 0.35),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF6366F1),
+                              width: 1.5,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'H',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
+        ),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: bottomPadding),
+        padding: EdgeInsets.fromLTRB(20, 20, 20, bottomPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top Section Heading (Matching AI Studio PC Web UI)
+            const Text(
+              'DISCOVER & EXPLORE',
+              style: TextStyle(
+                color: Color(0xFF818CF8),
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.4,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Genres, Moods & Charts',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 30,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.6,
+              ),
+            ),
+            const SizedBox(height: 20),
             // Top action buttons: New Releases, Global Charts, Import Link
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

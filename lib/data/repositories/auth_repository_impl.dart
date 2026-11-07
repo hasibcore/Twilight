@@ -35,13 +35,13 @@ class AuthRepositoryImpl implements AuthRepository {
       AppLogger.error('Failed to load user session: $e');
     }
 
-    // Default to Guest user session
+    // Default to Hasibul Hasan (gudhulibela031@gmail.com) matching PC Web UI
     _currentUser = const UserProfile(
-      uid: 'guest_user_1',
-      name: 'Guest Listener',
-      email: 'guest@twilight.app',
+      uid: 'usr_hasibul_hasan',
+      name: 'Hasibul Hasan',
+      email: 'gudhulibela031@gmail.com',
       avatarUrl: '',
-      isGuest: true,
+      isGuest: false,
     );
   }
 

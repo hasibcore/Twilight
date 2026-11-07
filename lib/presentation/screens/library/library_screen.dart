@@ -44,70 +44,114 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundDark,
-        surfaceTintColor: Colors.transparent,
-        title: const Text('Library', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.link_rounded),
-            tooltip: 'Import Web Playlist',
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (_) => const ImportPlaylistDialog(),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: AppStrings.createPlaylist,
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (_) => const CreatePlaylistDialog(),
-              );
-            },
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          indicatorColor: AppColors.primaryAccent,
-          labelColor: AppColors.textPrimary(context),
-          unselectedLabelColor: AppColors.textSecondary(context),
-          tabs: [
-            const Tab(text: 'Playlists'),
-            Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Downloads'),
-                  if (downloadProv.count > 0) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00E676).withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '${downloadProv.count}',
-                        style: const TextStyle(
-                          color: Color(0xFF00E676),
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(114),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF020617).withValues(alpha: 0.90),
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.white.withValues(alpha: 0.05),
+                width: 1,
               ),
             ),
-            const Tab(text: 'Liked Songs'),
-            const Tab(text: 'History'),
-          ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const AppLogo(
+                        size: 38,
+                        showText: true,
+                        subtitle: 'MUSIC',
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.add, color: Color(0xFFCBD5E1), size: 22),
+                            tooltip: AppStrings.createPlaylist,
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => const CreatePlaylistDialog(),
+                              );
+                            },
+                          ),
+                          GestureDetector(
+                            onTap: () => MainNavigationScreen.switchToTab(context, 4),
+                            child: Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF64748B).withValues(alpha: 0.35),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF6366F1),
+                                  width: 1.5,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'H',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  indicatorColor: AppColors.primaryAccent,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: const Color(0xFF94A3B8),
+                  tabs: [
+                    const Tab(text: 'Playlists'),
+                    Tab(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Downloads'),
+                          if (downloadProv.count > 0) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00E676).withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${downloadProv.count}',
+                                style: const TextStyle(
+                                  color: Color(0xFF00E676),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const Tab(text: 'Liked Songs'),
+                    const Tab(text: 'History'),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
       body: Padding(

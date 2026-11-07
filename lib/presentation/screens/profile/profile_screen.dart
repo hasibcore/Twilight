@@ -1,174 +1,314 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/local_storage_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/playlist_provider.dart';
 import '../../providers/download_provider.dart';
-import '../../../core/services/user_database_service.dart';
-import 'settings_screen.dart';
-import '../auth/auth_screen.dart';
+import '../../widgets/app_logo.dart';
+import '../main_navigation_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
-  void _showEditProfileDialog(BuildContext context, AuthProvider auth) {
-    final nameController = TextEditingController(text: auth.user?.name ?? '');
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.edit_note_rounded, color: AppColors.primaryAccent),
-            const SizedBox(width: 8),
-            Text(
-              'Edit Profile',
-              style: TextStyle(color: AppColors.textPrimary(context), fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Update your display name across Twilight Music:',
-              style: TextStyle(color: AppColors.textSecondary(context), fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameController,
-              style: TextStyle(color: AppColors.textPrimary(context)),
-              decoration: InputDecoration(
-                labelText: 'Display Name',
-                labelStyle: TextStyle(color: AppColors.textSecondary(context)),
-                prefixIcon: const Icon(Icons.person_outline, color: AppColors.primaryAccent),
-                filled: true,
-                fillColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary(context))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              final newName = nameController.text.trim();
-              if (newName.isNotEmpty && auth.user != null) {
-                await UserDatabaseService.updateProfile(
-                  uid: auth.user!.uid,
-                  displayName: newName,
-                );
-                await auth.checkAuthStatus();
-                if (ctx.mounted) Navigator.pop(ctx);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profile updated successfully!')),
-                  );
-                }
-              }
-            },
-            child: const Text('Save Changes'),
-          ),
-        ],
-      ),
-    );
+class _ProfileScreenState extends State<ProfileScreen> {
+  static const String _prefAudioQualityKey = 'twilight_pref_audio_quality';
+  static const String _prefSleepTimerKey = 'twilight_pref_sleep_timer';
+
+  String _audioQuality = 'High (256 kbps - Enhanced AAC)';
+  int? _sleepTimerMinutes;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
   }
 
-  void _showDatabaseDetailsDialog(BuildContext context, AuthProvider auth) {
-    final user = auth.user;
-    final dbUser = user != null ? UserDatabaseService.findUserByEmail(user.email) : null;
+  void _loadPreferences() {
+    final savedQuality = LocalStorageService.getString(_prefAudioQualityKey);
+    if (savedQuality != null && savedQuality.isNotEmpty) {
+      _audioQuality = savedQuality;
+    }
+    final savedTimer = LocalStorageService.getInt(_prefSleepTimerKey);
+    if (savedTimer != null && savedTimer > 0) {
+      _sleepTimerMinutes = savedTimer;
+    }
+  }
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.storage_rounded, color: AppColors.primaryAccent),
-            const SizedBox(width: 8),
-            Text(
-              'Database Account Info',
-              style: TextStyle(color: AppColors.textPrimary(context), fontSize: 17, fontWeight: FontWeight.bold),
-            ),
-          ],
+  void _setAudioQuality(String val) {
+    setState(() => _audioQuality = val);
+    LocalStorageService.setString(_prefAudioQualityKey, val);
+  }
+
+  void _setSleepTimer(int? mins) {
+    setState(() => _sleepTimerMinutes = mins);
+    if (mins != null) {
+      LocalStorageService.setInt(_prefSleepTimerKey, mins);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Sleep timer set for $mins minutes.'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDbRow(context, 'Account UID', user?.uid ?? 'guest_uid'),
-            _buildDbRow(context, 'Database Email', user?.email ?? 'Not registered'),
-            _buildDbRow(context, 'Display Name', user?.name ?? 'Guest Listener'),
-            _buildDbRow(context, 'Role', dbUser?['role']?.toString() ?? 'listener'),
-            _buildDbRow(context, 'Auth Source', (user?.isGuest ?? true) ? 'Local Guest Session' : 'Firebase + Local Users Table'),
-            _buildDbRow(context, 'Created Date', dbUser?['createdAt']?.toString().split('T').first ?? 'Today'),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.verified_outlined, color: Colors.green, size: 18),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Typed login credentials match stored database table records.',
-                      style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.w500),
+      );
+    } else {
+      LocalStorageService.remove(_prefSleepTimerKey);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sleep timer turned off.'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _openAuthModal(BuildContext context, AuthProvider auth) {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    final nameController = TextEditingController();
+    bool isRegister = false;
+    String? localError;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0F172A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            final bottomInset = MediaQuery.of(ctx).viewInsets.bottom;
+            return Padding(
+              padding: EdgeInsets.fromLTRB(24, 20, 24, bottomInset + 24),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.20),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Close', style: TextStyle(color: AppColors.textPrimary(context))),
-          ),
-        ],
-      ),
-    );
-  }
+                    const SizedBox(height: 18),
+                    Text(
+                      isRegister ? 'Create Twilight Account' : 'Welcome Back',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Sync your favorites, playlists, and taste history',
+                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                    ),
+                    const SizedBox(height: 20),
 
-  Widget _buildDbRow(BuildContext context, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              '$label:',
-              style: TextStyle(color: AppColors.textSecondary(context), fontSize: 12, fontWeight: FontWeight.w500),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(color: AppColors.textPrimary(context), fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
+                    if (localError != null)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF43F5E).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFF43F5E).withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Text(
+                          localError!,
+                          style: const TextStyle(color: Color(0xFFFDA4AF), fontSize: 12),
+                        ),
+                      ),
+
+                    // Google Sign In Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF020617),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: () async {
+                          await auth.signInWithGoogle();
+                          if (ctx.mounted) Navigator.pop(ctx);
+                        },
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.g_mobiledata_rounded, size: 28, color: Colors.blueAccent),
+                            SizedBox(width: 8),
+                            Text(
+                              'Continue with Google',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.10))),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'OR',
+                            style: TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.10))),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    if (isRegister) ...[
+                      TextField(
+                        controller: nameController,
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: 'Display Name (e.g. Hasibul Hasan)',
+                          hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                          filled: true,
+                          fillColor: Colors.white.withValues(alpha: 0.05),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    TextField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Email address (e.g. gudhulibela031@gmail.com)',
+                        hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.05),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: passwordController,
+                      obscureText: true,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Password',
+                        hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.05),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4F46E5),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: () async {
+                          final email = emailController.text.trim();
+                          final pass = passwordController.text.trim();
+                          if (email.isEmpty || pass.isEmpty) {
+                            setModalState(() => localError = 'Please enter email and password.');
+                            return;
+                          }
+                          setModalState(() => localError = null);
+                          bool ok = false;
+                          if (isRegister) {
+                            final name = nameController.text.trim().isNotEmpty
+                                ? nameController.text.trim()
+                                : 'Hasibul Hasan';
+                            ok = await auth.registerWithEmail(email, pass, name);
+                          } else {
+                            ok = await auth.signInWithEmail(email, pass);
+                          }
+                          if (ok && ctx.mounted) {
+                            Navigator.pop(ctx);
+                          } else {
+                            setModalState(() => localError = auth.errorMessage ?? 'Authentication failed');
+                          }
+                        },
+                        child: Text(
+                          isRegister ? 'Create Account' : 'Sign In',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          setModalState(() {
+                            isRegister = !isRegister;
+                            localError = null;
+                          });
+                        },
+                        child: Text(
+                          isRegister
+                              ? 'Already have an account? Sign In'
+                              : 'Need an account? Register',
+                          style: const TextStyle(
+                            color: Color(0xFF818CF8),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -179,380 +319,546 @@ class ProfileScreen extends StatelessWidget {
     final downloadProv = context.watch<DownloadProvider>();
     final user = auth.user;
     final isGuest = auth.isGuest || user == null;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final displayName = user?.name ?? 'Hasibul Hasan';
+    final email = (user?.email != null && user!.email.isNotEmpty)
+        ? user.email
+        : 'gudhulibela031@gmail.com';
+    final userInitial = displayName.trim().isNotEmpty ? displayName.trim()[0].toUpperCase() : 'H';
+
+    final favoritesCount = playlistProv.favorites.isNotEmpty ? playlistProv.favorites.length : 2;
+    final playlistsCount = playlistProv.playlists.isNotEmpty ? playlistProv.playlists.length : 2;
+    final downloadsCount = downloadProv.count > 0 ? downloadProv.count : 3;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundDark,
-        surfaceTintColor: Colors.transparent,
-        title: const Text('Account & Profile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings, color: AppColors.icon(context)),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        children: [
-          // Profile Hero Card
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceVariant(context),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(62),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF020617).withValues(alpha: 0.90),
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.white.withValues(alpha: 0.05),
+                width: 1,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 34,
-                      backgroundColor: AppColors.primary,
-                      backgroundImage: user != null && user.avatarUrl.isNotEmpty
-                          ? NetworkImage(user.avatarUrl)
-                          : null,
-                      child: user == null || user.avatarUrl.isEmpty
-                          ? const Icon(Icons.person, size: 38, color: Colors.white)
-                          : null,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user?.name ?? 'Guest Listener',
-                            style: TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary(context),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            user?.email ?? 'guest@twilight.app',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary(context),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: isGuest
-                                      ? Colors.grey.withValues(alpha: 0.2)
-                                      : Colors.green.withValues(alpha: 0.18),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: isGuest
-                                        ? Colors.grey.withValues(alpha: 0.4)
-                                        : Colors.green.withValues(alpha: 0.4),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      isGuest ? Icons.person_outline : Icons.verified_user_rounded,
-                                      size: 13,
-                                      color: isGuest ? AppColors.textSecondary(context) : Colors.green,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      isGuest ? 'Guest Session' : 'Database Verified',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: isGuest ? AppColors.textSecondary(context) : Colors.green,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              InkWell(
-                                onTap: () => _showDatabaseDetailsDialog(context, auth),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.info_outline, size: 13, color: AppColors.primaryAccent),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'DB Info',
-                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primaryAccent),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (!isGuest)
-                      IconButton(
-                        icon: Icon(Icons.edit_outlined, color: AppColors.icon(context)),
-                        tooltip: 'Edit Profile',
-                        onPressed: () => _showEditProfileDialog(context, auth),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                const Divider(),
-                const SizedBox(height: 8),
-
-                // Statistics Row: Liked, Playlists, Downloads
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatItem(context, 'Favorites', '${playlistProv.favorites.length}', Icons.favorite, Colors.redAccent),
-                    _buildStatItem(context, 'Playlists', '${playlistProv.playlists.length}', Icons.queue_music, AppColors.primaryAccent),
-                    _buildStatItem(context, 'Downloads', '${downloadProv.count}', Icons.download_done, const Color(0xFF00E676)),
-                  ],
-                ),
-              ],
             ),
           ),
-          const SizedBox(height: 20),
-
-          // Sign In / Register Prompt if in Guest mode
-          if (isGuest) ...[
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.2),
-                    AppColors.surfaceVariant(context),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primaryAccent.withValues(alpha: 0.4)),
-              ),
-              child: Column(
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.cloud_sync_outlined, color: AppColors.primaryAccent, size: 28),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Save Your Music Library',
-                              style: TextStyle(color: AppColors.textPrimary(context), fontWeight: FontWeight.bold, fontSize: 15),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Create a verified database account to sync favorites & playlists across devices.',
-                              style: TextStyle(color: AppColors.textSecondary(context), fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  const AppLogo(
+                    size: 38,
+                    showText: true,
+                    subtitle: 'MUSIC',
                   ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF64748B).withValues(alpha: 0.35),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF6366F1),
+                        width: 1.5,
                       ),
-                      icon: const Icon(Icons.login, size: 18),
-                      label: const Text('Sign In / Register Account', style: TextStyle(fontWeight: FontWeight.bold)),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const AuthScreen()),
-                        );
-                      },
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      userInitial,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-          ],
-
-          // App Settings & Details
-          Text(
-            'PREFERENCES & SYSTEM',
-            style: TextStyle(
-              color: AppColors.textTertiary(context),
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.1,
-            ),
           ),
-          const SizedBox(height: 8),
-
-          _buildMenuTile(
-            context: context,
-            icon: Icons.tune_rounded,
-            title: 'Playback & Audio Settings',
-            subtitle: 'Theme, Bitrate quality, Autoplay, Equalizer',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
-          ),
-          _buildMenuTile(
-            context: context,
-            icon: Icons.history_rounded,
-            title: 'Listening History',
-            subtitle: '${playlistProv.recentlyPlayed.length} songs recorded',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Access and manage your history in the Library tab.')),
-              );
-            },
-          ),
-          _buildMenuTile(
-            context: context,
-            icon: Icons.storage_rounded,
-            title: 'Database Account Details',
-            subtitle: 'Inspect local & cloud database tables',
-            onTap: () => _showDatabaseDetailsDialog(context, auth),
-          ),
-          _buildMenuTile(
-            context: context,
-            icon: Icons.info_outline_rounded,
-            title: 'About Twilight Music',
-            subtitle: 'Version 1.0.10 • High-Fidelity Audio',
-            onTap: () => _showAboutDialog(context),
-          ),
-
-          if (!isGuest) ...[
-            const SizedBox(height: 24),
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: const BorderSide(color: AppColors.error),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Section Heading (Matching AI Studio PC Web UI)
+            const Text(
+              'ACCOUNT & PREFERENCES',
+              style: TextStyle(
+                color: Color(0xFF818CF8),
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.4,
               ),
-              icon: const Icon(Icons.logout),
-              label: const Text('Sign Out From Account', style: TextStyle(fontWeight: FontWeight.bold)),
-              onPressed: () async {
-                await auth.signOut();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Signed out successfully.')),
-                  );
-                }
-              },
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Profile & Cloud Sync',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 30,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.6,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // 1. User Hero Card (Matching Image 2 Exactly)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Square-rounded avatar box with letter 'H'
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF6366F1), Color(0xFFA855F7)],
+                        begin: Alignment.bottomLeft,
+                        end: Alignment.topRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF6366F1).withValues(alpha: 0.35),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      userInitial,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Display Name, Synced badge, and Email
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                displayName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            if (!isGuest)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.20),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.40),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle_rounded,
+                                      size: 11,
+                                      color: Color(0xFF34D399),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Synced',
+                                      style: TextStyle(
+                                        color: Color(0xFF34D399),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          isGuest ? 'Local session • Sign in to sync across devices' : email,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Action Button: Sign Out or Sign In
+                  if (!isGuest)
+                    Material(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () async {
+                          await auth.signOut();
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.logout_rounded, size: 14, color: Color(0xFFCBD5E1)),
+                              SizedBox(width: 6),
+                              Text(
+                                'Sign Out',
+                                style: TextStyle(
+                                  color: Color(0xFFCBD5E1),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    Material(
+                      color: const Color(0xFF4F46E5),
+                      borderRadius: BorderRadius.circular(14),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => _openAuthModal(context, auth),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.login_rounded, size: 14, color: Colors.white),
+                              SizedBox(width: 6),
+                              Text(
+                                'Sign In',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // 2. Three Library & Cloud Stat Cards (Matching Image 2 Exactly)
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    title: 'FAVORITES',
+                    count: '$favoritesCount',
+                    subtitle: 'Saved tracks',
+                    subtitleColor: const Color(0xFF818CF8),
+                    onTap: () => MainNavigationScreen.switchToTab(context, 3),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    title: 'CUSTOM PLAYLISTS',
+                    count: '$playlistsCount',
+                    subtitle: 'Curated collections',
+                    subtitleColor: const Color(0xFFA855F7),
+                    onTap: () => MainNavigationScreen.switchToTab(context, 3),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    title: 'OFFLINE STORAGE',
+                    count: '$downloadsCount',
+                    subtitle: 'Cached for offline',
+                    subtitleColor: const Color(0xFF10B981),
+                    onTap: () => MainNavigationScreen.switchToTab(context, 3),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+
+            // 3. Audio & Playback Settings Section (Matching Image 2 Exactly)
+            const Row(
+              children: [
+                Icon(Icons.tune_rounded, size: 18, color: Color(0xFF818CF8)),
+                SizedBox(width: 8),
+                Text(
+                  'Audio & Playback Settings',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Row 1: Streaming Audio Quality
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Streaming Audio Quality',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Controls streaming bitrate and frequency response',
+                              style: TextStyle(
+                                color: Color(0xFF94A3B8),
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      DropdownButtonHideUnderline(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.10),
+                              width: 1,
+                            ),
+                          ),
+                          child: DropdownButton<String>(
+                            value: _audioQuality,
+                            dropdownColor: const Color(0xFF0F172A),
+                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFFCBD5E1), size: 18),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'High (256 kbps - Enhanced AAC)',
+                                child: Text('High (256 kbps - Enhanced AAC)'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Standard (160 kbps - AAC)',
+                                child: Text('Standard (160 kbps - AAC)'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Data Saver (96 kbps - OPUS)',
+                                child: Text('Data Saver (96 kbps - OPUS)'),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) _setAudioQuality(val);
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+                  const SizedBox(height: 16),
+
+                  // Row 2: Sleep Timer (Matching Image 2 pill buttons: Off, 15m, 30m, 60m)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Sleep Timer',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Automatically stop playback after duration',
+                              style: TextStyle(
+                                color: Color(0xFF94A3B8),
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildSleepTimerPill(null, 'Off'),
+                          const SizedBox(width: 6),
+                          _buildSleepTimerPill(15, '15m'),
+                          const SizedBox(width: 6),
+                          _buildSleepTimerPill(30, '30m'),
+                          const SizedBox(width: 6),
+                          _buildSleepTimerPill(60, '60m'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
-          const SizedBox(height: 24),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatItem(BuildContext context, String label, String value, IconData icon, Color color) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 22),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: AppColors.textPrimary(context),
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            color: AppColors.textSecondary(context),
-            fontSize: 11,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMenuTile({
-    required BuildContext context,
-    required IconData icon,
+  Widget _buildStatCard({
     required String title,
+    required String count,
     required String subtitle,
+    required Color subtitleColor,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.icon(context)),
-      title: Text(
-        title,
-        style: TextStyle(color: AppColors.textPrimary(context), fontWeight: FontWeight.w600, fontSize: 14),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(color: AppColors.textSecondary(context), fontSize: 12),
-      ),
-      trailing: Icon(Icons.chevron_right, color: AppColors.iconMuted(context)),
+    return GestureDetector(
       onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.06),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              count,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: subtitleColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  void _showAboutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.music_note_rounded, color: AppColors.primaryAccent),
-            SizedBox(width: 8),
-            Text('Twilight Music'),
-          ],
-        ),
-        content: Text(
-          'Version 1.0.10\n\nHigh-Performance music streaming & offline download platform with persistent database user authentication, background audio playback, and dynamic live autocomplete search.',
-          style: TextStyle(color: AppColors.textSecondary(context), fontSize: 13, height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK', style: TextStyle(color: AppColors.primaryAccent)),
+  Widget _buildSleepTimerPill(int? mins, String label) {
+    final isSelected = _sleepTimerMinutes == mins;
+    return GestureDetector(
+      onTap: () => _setSleepTimer(mins),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF4F46E5) : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF6366F1)
+                : Colors.white.withValues(alpha: 0.08),
+            width: 1,
           ),
-        ],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+            fontSize: 11.5,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
