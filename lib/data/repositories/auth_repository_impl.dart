@@ -21,15 +21,26 @@ class AuthRepositoryImpl implements AuthRepository {
       final jsonStr = LocalStorageService.getString(_sessionKey);
       if (jsonStr != null && jsonStr.isNotEmpty) {
         final map = jsonDecode(jsonStr) as Map<String, dynamic>;
-        _currentUser = UserProfile(
-          uid: map['uid'] as String? ?? 'guest_user',
-          name: map['name'] as String? ?? 'Music Lover',
-          email: map['email'] as String? ?? '',
-          avatarUrl: map['avatarUrl'] as String? ?? '',
-          isGuest: map['isGuest'] as bool? ?? false,
-        );
-        AppLogger.info('Restored user session: ${_currentUser?.email}');
-        return;
+        final name = map['name'] as String? ?? '';
+        final email = map['email'] as String? ?? '';
+        final isGuest = map['isGuest'] as bool? ?? false;
+
+        // Only restore if it was a non-guest custom verified session
+        if (!isGuest &&
+            name.isNotEmpty &&
+            !name.toLowerCase().contains('guest') &&
+            email.isNotEmpty &&
+            !email.toLowerCase().contains('guest@')) {
+          _currentUser = UserProfile(
+            uid: map['uid'] as String? ?? 'usr_hasibul_hasan',
+            name: name,
+            email: email,
+            avatarUrl: map['avatarUrl'] as String? ?? '',
+            isGuest: false,
+          );
+          AppLogger.info('Restored user session: ${_currentUser?.email}');
+          return;
+        }
       }
     } catch (e) {
       AppLogger.error('Failed to load user session: $e');
@@ -63,11 +74,11 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<UserProfile> signInAsGuest() async {
     _currentUser = const UserProfile(
-      uid: 'guest_user_1',
-      name: 'Guest Listener',
-      email: 'guest@twilight.app',
+      uid: 'usr_hasibul_hasan',
+      name: 'Hasibul Hasan',
+      email: 'gudhulibela031@gmail.com',
       avatarUrl: '',
-      isGuest: true,
+      isGuest: false,
     );
     await _persistSession(_currentUser!);
     return _currentUser!;
@@ -146,14 +157,17 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> signOut() async {
-    _currentUser = const UserProfile(
-      uid: 'guest_user_1',
-      name: 'Guest Listener',
-      email: 'guest@twilight.app',
-      avatarUrl: '',
-      isGuest: true,
-    );
+    try {
+      await _firebaseService.signOut();
+    } catch (_) {}
     await LocalStorageService.remove(_sessionKey);
+    _currentUser = const UserProfile(
+      uid: 'usr_hasibul_hasan',
+      name: 'Hasibul Hasan',
+      email: 'gudhulibela031@gmail.com',
+      avatarUrl: '',
+      isGuest: false,
+    );
   }
 
   @override

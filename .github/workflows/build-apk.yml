@@ -46,6 +46,7 @@ jobs:
           flutter build apk --release
           cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Twilight-Android-v3.0.0.apk
           cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Twilight-Android-v3.5.0.apk
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Twilight-Android-v3.5.1.apk
 
       - name: Package Full Project Release ZIP
         run: |
@@ -57,6 +58,7 @@ jobs:
         with:
           name: Twilight-Android-v3.0.0
           path: |
+            build/app/outputs/flutter-apk/Twilight-Android-v3.5.1.apk
             build/app/outputs/flutter-apk/Twilight-Android-v3.5.0.apk
             build/app/outputs/flutter-apk/Twilight-Android-v3.0.0.apk
             build/app/outputs/flutter-apk/app-release.apk
@@ -91,6 +93,7 @@ jobs:
             - **0ms Direct Master & Verified Stream Playback**: Instant playback for featured tracks and parallel verified YouTube + 320kbps AAC + SoundCloud HLS/progressive streams.
             - **Click-to-Play Clean Startup**: Starts with an empty player state (`currentSong = null`) until a user explicitly selects a song.
           files: |
+            build/app/outputs/flutter-apk/Twilight-Android-v3.5.1.apk
             build/app/outputs/flutter-apk/Twilight-Android-v3.5.0.apk
             build/app/outputs/flutter-apk/Twilight-Android-v3.0.0.apk
             build/app/outputs/flutter-apk/app-release.apk
