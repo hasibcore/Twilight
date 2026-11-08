@@ -507,18 +507,24 @@ class PlayerProvider extends ChangeNotifier {
     );
     notifyListeners();
 
-    // 3. Explicit 'stop current' instruction to halt active native audio decoder immediately
-    await stopCurrentBeforeSwitch();
-    if (currentRequestId != _playRequestId || _intentionalPause) return;
-
-    // Restore resolving/loading flags after stopCurrentBeforeSwitch
-    _isResolvingSong = true;
-    _isLoading = true;
-
     final effectiveDebounce =
         debounceDuration ?? (_isTest ? Duration.zero : songSelectionDebounceDuration);
 
     if (effectiveDebounce > Duration.zero) {
+      // 3a. Synchronously halt timers and schedule 300ms debounce so isDebouncePending is true at 0ms
+      _errorSkipTimer?.cancel();
+      _errorSkipTimer = null;
+      _loadingWatchdog?.cancel();
+      _loadingWatchdog = null;
+      _resumeStallWatchdog?.cancel();
+      _resumeStallWatchdog = null;
+      _proactivePauseRefreshTimer?.cancel();
+      _proactivePauseRefreshTimer = null;
+      _isRefreshingStream = false;
+      _isPlaying = false;
+      _isResolvingSong = true;
+      _isLoading = true;
+
       final completer = Completer<void>();
       _pendingPlayCompleter = completer;
       _playDebounceTimer = Timer(effectiveDebounce, () async {
@@ -537,9 +543,23 @@ class PlayerProvider extends ChangeNotifier {
         );
         if (!completer.isCompleted) completer.complete();
       });
+
+      if (_audioPlayer != null && !_isTest) {
+        try {
+          await _audioPlayer!.stop();
+        } catch (_) {}
+      }
       await completer.future;
       return;
     }
+
+    // 3b. Explicit 'stop current' instruction to halt active native audio decoder immediately
+    await stopCurrentBeforeSwitch();
+    if (currentRequestId != _playRequestId || _intentionalPause) return;
+
+    // Restore resolving/loading flags after stopCurrentBeforeSwitch
+    _isResolvingSong = true;
+    _isLoading = true;
 
     await _executeDebouncedStreamLoad(
       song,

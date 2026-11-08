@@ -515,28 +515,36 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(
-                        Icons.podcasts_rounded,
-                        size: 18,
-                        color: Color(0xFFF43F5E),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Artist Radio Stations',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.3,
+                  const Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.podcasts_rounded,
+                          size: 18,
+                          color: Color(0xFFF43F5E),
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'Artist Radio Stations',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () => MainNavigationScreen.openSearch(context),
                     child: const Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'Explore All',
