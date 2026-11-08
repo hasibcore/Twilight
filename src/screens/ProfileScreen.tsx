@@ -82,11 +82,13 @@ export const ProfileScreen: React.FC = () => {
       {/* User Card */}
       <div className="p-6 rounded-3xl bg-slate-900/60 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-xl">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg overflow-hidden shrink-0">
+          <div className="w-16 h-16 rounded-2xl bg-slate-500/65 border border-white/10 flex items-center justify-center text-white shadow-lg overflow-hidden shrink-0">
             {user.photoURL ? (
               <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
             ) : (
-              <User className="w-8 h-8" />
+              <span className="text-2xl font-black tracking-tight">
+                {(user.displayName || 'H').trim().charAt(0).toUpperCase()}
+              </span>
             )}
           </div>
           <div>

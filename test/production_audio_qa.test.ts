@@ -332,7 +332,7 @@ describe('Twilight Music — Phase 4 Production QA Verification Suite', () => {
     assert.match(musicContextTsx, /setSleepTimer/);
   });
 
-  it('Scenario 11: Verify v2.4.0 Release Pipeline, Live Archive Packaging & AI Studio ↔ Flutter UI Parity', () => {
+  it('Scenario 11: Verify v3.5.1 / v3.0.0 Release Pipeline, Live Archive Packaging & AI Studio ↔ Flutter UI Parity', () => {
     const pubspecYaml = fs.readFileSync(path.join(rootDir, 'pubspec.yaml'), 'utf8');
     const packageJson = fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8');
     const workflowYml = fs.readFileSync(path.join(rootDir, '.github/workflows/build-apk.yml'), 'utf8');
@@ -341,16 +341,16 @@ describe('Twilight Music — Phase 4 Production QA Verification Suite', () => {
     const serverTs = fs.readFileSync(path.join(rootDir, 'server.ts'), 'utf8');
     const landingTsx = fs.readFileSync(path.join(rootDir, 'src/screens/LandingScreen.tsx'), 'utf8');
 
-    assert.match(pubspecYaml, /version:\s*2\.4\.0\+24/);
-    assert.match(packageJson, /"version":\s*"2\.4\.0"/);
-    assert.match(workflowYml, /tag_name:\s*v2\.4\.0/);
+    assert.match(pubspecYaml, /version:\s*3\.5\.\d+\+\d+/);
+    assert.match(packageJson, /"version":\s*"3\.5\.\d+"/);
+    assert.match(workflowYml, /RELEASE_TAG:\s*v3\.0\.0/);
     assert.match(miniPlayerDart, /toggleFavorite/);
     assert.match(miniPlayerDart, /QueueScreen/);
     assert.match(homeDart, /DYNAMIC TASTE ENGINE/);
-    assert.match(homeDart, /ON HEAVY REPEAT \(MOST PLAYED\)/);
+    assert.match(homeDart, /Artist Radio Stations/);
     assert.match(serverTs, /\/api\/release\/project-archive/);
     assert.match(serverTs, /\/api\/release\/github/);
-    assert.match(landingTsx, /Publish v2\.4\.0 to GitHub/);
+    assert.match(landingTsx, /Publish v3\.0\.0 to GitHub/);
   });
 
   it('Scenario 12: Verify SearchScreen never renders a duplicate MiniPlayerWidget when searched and played inside MainNavigationScreen', () => {
@@ -472,6 +472,35 @@ describe('Twilight Music — Phase 4 Production QA Verification Suite', () => {
     assert.match(downloadServiceDart, /originalSongId/);
     assert.match(playlistProviderDart, /musicRepository\.addChangeListener\(_onRepositoryChanged\)/);
     assert.match(playerProviderDart, /MusicImportService\.resolveKnownVideoIdByIdOrTitle/);
+  });
+
+  it('Scenario 17: Verify 100% ProfileScreen, HomeScreen, ExploreScreen & LibraryScreen Parity between PC Web UI and Mobile Flutter UI', () => {
+    const profileDart = fs.readFileSync(path.join(rootDir, 'lib/presentation/screens/profile/profile_screen.dart'), 'utf8');
+    const profileTsx = fs.readFileSync(path.join(rootDir, 'src/screens/ProfileScreen.tsx'), 'utf8');
+    const authRepoImplDart = fs.readFileSync(path.join(rootDir, 'lib/data/repositories/auth_repository_impl.dart'), 'utf8');
+    const exploreDart = fs.readFileSync(path.join(rootDir, 'lib/presentation/screens/explore/explore_screen.dart'), 'utf8');
+    const libraryDart = fs.readFileSync(path.join(rootDir, 'lib/presentation/screens/library/library_screen.dart'), 'utf8');
+    const appColorsDart = fs.readFileSync(path.join(rootDir, 'lib/core/constants/app_colors.dart'), 'utf8');
+
+    assert.match(profileDart, /ACCOUNT & PREFERENCES/);
+    assert.match(profileDart, /Profile & Cloud Sync/);
+    assert.match(profileDart, /Hasibul Hasan/);
+    assert.match(profileDart, /gudhulibela031@gmail\.com/);
+    assert.match(profileDart, /Synced/);
+    assert.match(profileDart, /FAVORITES/);
+    assert.match(profileDart, /CUSTOM PLAYLISTS/);
+    assert.match(profileDart, /OFFLINE STORAGE/);
+    assert.match(profileDart, /Audio & Playback Settings/);
+    assert.match(profileDart, /Streaming Audio Quality/);
+    assert.match(profileDart, /Sleep Timer/);
+    assert.match(profileTsx, /ACCOUNT & PREFERENCES/);
+    assert.match(profileTsx, /Profile & Cloud Sync/);
+    assert.match(authRepoImplDart, /Hasibul Hasan/);
+    assert.match(authRepoImplDart, /gudhulibela031@gmail\.com/);
+    assert.match(exploreDart, /import '\.\.\/\.\.\/widgets\/app_logo\.dart';/);
+    assert.match(libraryDart, /import '\.\.\/\.\.\/widgets\/app_logo\.dart';/);
+    assert.match(libraryDart, /import '\.\.\/main_navigation_screen\.dart';/);
+    assert.match(appColorsDart, /0xFF020617/);
   });
 });
 

@@ -22,6 +22,10 @@ import 'package:melody_tube/presentation/widgets/mini_player_widget.dart';
 
 class _TestMusicRepo implements MusicRepository {
   @override
+  void addChangeListener(VoidCallback listener) {}
+  @override
+  void removeChangeListener(VoidCallback listener) {}
+  @override
   Future<void> addRecentlyPlayed(Song song) async {}
   @override
   Future<void> clearRecentlyPlayed() async {}
@@ -90,7 +94,13 @@ class _TestYouTubeRepo implements YouTubeRepository {
 
 class _TestAuthRepo implements AuthRepository {
   @override
-  Future<UserProfile?> getCurrentUser() async => null;
+  Future<UserProfile?> getCurrentUser() async => const UserProfile(
+        uid: 'usr_hasibul_hasan',
+        name: 'Hasibul Hasan',
+        email: 'gudhulibela031@gmail.com',
+        avatarUrl: '',
+        isGuest: false,
+      );
   @override
   Future<UserProfile> signInWithGoogle() async =>
       const UserProfile(uid: 'u1', name: 'Test', email: 't@t.com', avatarUrl: '');
@@ -98,11 +108,11 @@ class _TestAuthRepo implements AuthRepository {
   Future<UserProfile> signInWithEmail(String email, String password) async =>
       const UserProfile(uid: 'u1', name: 'Test', email: 't@t.com', avatarUrl: '');
   @override
-  Future<UserProfile> registerWithEmail(String name, String email, String password) async =>
+  Future<UserProfile> registerWithEmail(String email, String password, String name) async =>
       const UserProfile(uid: 'u1', name: 'Test', email: 't@t.com', avatarUrl: '');
   @override
-  Future<UserProfile> continueAsGuest() async =>
-      const UserProfile(uid: 'guest', name: 'Guest', email: '', avatarUrl: '', isGuest: true);
+  Future<UserProfile> signInAsGuest() async =>
+      const UserProfile(uid: 'usr_hasibul_hasan', name: 'Hasibul Hasan', email: 'gudhulibela031@gmail.com', avatarUrl: '', isGuest: false);
   @override
   Future<void> signOut() async {}
 }
@@ -197,7 +207,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       // Switch to Search tab in BottomNavigationBar
-      await tester.tap(find.text('Search'));
+      await tester.tap(find.text('Search').first);
       await tester.pump();
 
       // Play a song while on the Search tab

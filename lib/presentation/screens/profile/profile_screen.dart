@@ -369,8 +369,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: const Color(0xFF64748B).withValues(alpha: 0.50),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        width: 1,
+                        color: const Color(0xFF6366F1),
+                        width: 1.5,
                       ),
                     ),
                     alignment: Alignment.center,

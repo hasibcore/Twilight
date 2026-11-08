@@ -40,16 +40,16 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
         <button
           onClick={() => onSelectTab('profile')}
           title="User Profile & Settings"
-          className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border transition-all active:scale-95 flex items-center justify-center ${
+          className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border transition-all active:scale-95 flex items-center justify-center bg-slate-500/50 text-white font-bold text-sm ${
             currentTab === 'profile'
               ? 'border-indigo-500 ring-2 ring-indigo-500/30'
-              : 'border-white/10 hover:border-white/20 bg-white/5'
+              : 'border-white/15 hover:border-white/25'
           }`}
         >
           {user.photoURL ? (
             <img src={user.photoURL} alt={user.displayName || 'Profile'} className="w-full h-full object-cover" />
           ) : (
-            <User className="w-4 h-4 text-slate-300" />
+            <span>{(user.displayName || 'H').trim().charAt(0).toUpperCase()}</span>
           )}
         </button>
       </div>

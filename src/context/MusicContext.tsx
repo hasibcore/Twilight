@@ -178,11 +178,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // User & Collections
   const [user, setUser] = useState<UserProfile>({
-    uid: 'guest_local_user',
-    email: null,
-    displayName: 'Guest Listener',
+    uid: 'usr_hasibul_hasan',
+    email: 'gudhulibela031@gmail.com',
+    displayName: 'Hasibul Hasan',
     photoURL: null,
-    isGuest: true,
+    isGuest: false,
   });
 
   const [favorites, setFavorites] = useState<Song[]>(() => {
@@ -852,11 +852,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       } else {
         setUser({
-          uid: 'guest_local_user',
-          email: null,
-          displayName: 'Guest Listener',
+          uid: 'usr_hasibul_hasan',
+          email: 'gudhulibela031@gmail.com',
+          displayName: 'Hasibul Hasan',
           photoURL: null,
-          isGuest: true,
+          isGuest: false,
         });
       }
     });

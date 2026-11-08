@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:melody_tube/core/services/local_storage_service.dart';
 import 'package:melody_tube/core/services/lyrics_service.dart';
@@ -13,6 +14,12 @@ class MockMusicRepo implements MusicRepository {
   final List<Song> _favorites = [];
   final List<Song> _history = [];
   final List<String> _searchHistory = [];
+
+  @override
+  void addChangeListener(VoidCallback listener) {}
+
+  @override
+  void removeChangeListener(VoidCallback listener) {}
 
   @override
   Future<bool> isFavorite(String songId) async => _favorites.any((s) => s.id == songId);

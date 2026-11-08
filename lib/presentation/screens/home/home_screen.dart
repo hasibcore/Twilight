@@ -168,11 +168,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadCachedDynamicMixSync();
+    _loadCachedHomeDataSync();
     _loadArtists();
   }
 
-  void _loadCachedDynamicMixSync() {
+  void _loadCachedHomeDataSync() {
     try {
       final raw = LocalStorageService.getString(_dynamicCacheKey);
       if (raw != null && raw.isNotEmpty) {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:melody_tube/domain/entities/song.dart';
 import 'package:melody_tube/domain/entities/playlist.dart';
@@ -8,6 +9,12 @@ class MockMusicRepository implements MusicRepository {
   final List<Song> recentlyPlayed = [];
   final List<Song> favorites = [];
   final List<Playlist> playlists = [];
+
+  @override
+  void addChangeListener(VoidCallback listener) {}
+
+  @override
+  void removeChangeListener(VoidCallback listener) {}
 
   @override
   Future<void> addRecentlyPlayed(Song song) async {

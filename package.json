@@ -1,13 +1,14 @@
 {
   "name": "twilight-music",
   "private": true,
-  "version": "2.4.0",
+  "version": "3.5.1",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build",
     "start": "node server.ts",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "tsx --test test/production_audio_qa.test.ts"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
