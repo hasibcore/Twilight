@@ -351,4 +351,9 @@ class FirebaseService {
     }
     return 'Authentication error ($code). Please try again.';
   }
+
+  /// Sign out
+  Future<void> signOut() async {
+    // Clear any local tokens/cached auth headers if needed
+  }
 }

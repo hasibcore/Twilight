@@ -157,9 +157,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> signOut() async {
-    try {
-      await _firebaseService.signOut();
-    } catch (_) {}
     await LocalStorageService.remove(_sessionKey);
     _currentUser = const UserProfile(
       uid: 'usr_hasibul_hasan',
